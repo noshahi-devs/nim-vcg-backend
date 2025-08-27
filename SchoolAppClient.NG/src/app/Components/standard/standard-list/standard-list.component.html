@@ -1,0 +1,238 @@
+<style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f8f9fb;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: #fff;
+    }
+    .welcome {
+      display: flex;
+      flex-direction: column;
+    }
+    .welcome h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #333;
+    }
+    .welcome span {
+      font-size: 14px;
+      color: gray;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .search-box {
+      position: relative;
+    }
+    .search-box input {
+      padding: 8px 30px 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .search-box i {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: gray;
+    }
+    .icon {
+      font-size: 20px;
+      color: #555;
+      cursor: pointer;
+    }
+    .profile-pic {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .profile-pic img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .gradient-bar {
+      height: 8px;
+      width: 100%;
+      background: linear-gradient(90deg, #6a11cb, #2575fc, #f7971e);
+    }
+    .content {
+      background: #fff;
+      margin: 20px;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .user-info img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+    }
+    .user-info h3 {
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .grid label {
+      font-size: 14px;
+      color: #333;
+    }
+    .grid input, .grid select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+    .email-section {
+      margin-top: 20px;
+    }
+    .email-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f3f4f6;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .add-email {
+      border: none;
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .edit-btn {
+      background: #2575fc;
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: none;
+      float: right;
+      cursor: pointer;
+    }
+  </style>
+
+  <div class="header">
+    <div class="welcome">
+      <h2>Welcome, Amanda</h2>
+      <span>Tue, 07 June 2022</span>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <input type="text" placeholder="Search...">
+        <i class="fa fa-search"></i>
+      </div>
+      <i class="fa fa-bell icon"></i>
+      <div class="profile-pic">
+        <img src="https://i.pravatar.cc/50" alt="profile">
+      </div>
+    </div>
+  </div>
+  
+  <div class="gradient-bar"></div>
+  
+  <div class="content">
+    <div class="user-info">
+      <img src="https://i.pravatar.cc/100" alt="profile">
+      <div>
+        <h3>Alexa Rawles</h3>
+        <p>alexarawles...gmail.com</p>
+      </div>
+      <button class="edit-btn">Edit</button>
+    </div>
+    
+    <div class="grid">
+      <div>
+        <label>Full Name</label>
+        <input type="text" placeholder="Your First Name">
+      </div>
+      <div>
+        <label>Nick Name</label>
+        <input type="text" placeholder="Your First Name">
+      </div>
+      <div>
+        <label>Gender</label>
+        <select>
+          <option>Select Gender</option>
+        </select>
+      </div>
+      <div>
+        <label>Country</label>
+        <input type="text" placeholder="Your Country">
+      </div>
+      <div>
+        <label>Language</label>
+        <select>
+          <option>Select Language</option>
+        </select>
+      </div>
+      <div>
+        <label>Time Zone</label>
+        <input type="text" placeholder="Your Time Zone">
+      </div>
+    </div>
+    
+    <div class="email-section">
+      <h4>My Email Address</h4>
+      <div class="email-box">
+        <i class="fa fa-envelope"></i>
+        <div>
+          <p>alexarawles..gmail.com</p>
+          <small>1 month ago</small>
+        </div>
+      </div>
+      <button class="add-email">+ Add Email Address</button>
+    </div>
+  </div>
+
+
+
+
+
+<!--<div class="container">
+  <h2>Standard</h2>
+  <a class="btn btn-success" routerLink="/standard/create">Create Standard</a>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Standard Name</th>
+        <th>Standard Capasity</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let standard of standard">
+        <td>{{ standard.standardId }}</td>
+        <td>{{ standard.standardName }}</td>
+        <td>{{ standard.standardCapacity }}</td>
+
+        <td>
+          <a class="btn btn-primary" [routerLink]="['/standard', standard.standardId, 'edit']">Edit</a>
+          <button class="btn btn-danger" (click)="deleteStandard(standard.standardId)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>-->

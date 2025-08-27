@@ -1,0 +1,290 @@
+<div class="sidebar" 
+     [ngClass]="{ 'showSidebar': isSidebarVisible, 'hideSidebar': !isSidebarVisible }" 
+     [@fadeInOut]>
+
+  <ul>
+    <li>
+      <a routerLink="/home" routerLinkActive="active">
+        <span class="menu-icon material-icons">home</span>
+        <span class="menu-text">Home</span>
+      </a>
+    </li>
+
+    <li>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <span class="menu-icon material-icons">dashboard</span>
+        <span class="menu-text">Dashboard</span>
+      </a>
+    </li>
+
+    <!-- Student -->
+    <li (click)="toggleMenu('student')">
+      <span class="menu-icon material-icons">people</span>
+      <span class="menu-text">Student</span>
+    </li>
+    <ul *ngIf="openMenu === 'student'">
+      <li><a routerLink="/student"><mat-icon>people</mat-icon> <b>Students</b></a></li>
+    </ul>
+
+    <!-- Employee -->
+    <li (click)="toggleMenu('employee')">
+      <span class="menu-icon material-icons">business</span>
+      <span class="menu-text">Employee</span>
+    </li>
+    <ul *ngIf="openMenu === 'employee'">
+      <li><a routerLink="/departments"><mat-icon>business</mat-icon> Departments</a></li>
+      <li><a routerLink="/staff-list"><mat-icon>group</mat-icon> Staff</a></li>
+      <li><a routerLink="/staff-salaries"><mat-icon>attach_money</mat-icon> Staff Salaries</a></li>
+    </ul>
+
+    <!-- Activities -->
+    <li (click)="toggleMenu('activities')">
+      <span class="menu-icon material-icons">event</span>
+      <span class="menu-text">Activities</span>
+    </li>
+    <ul *ngIf="openMenu === 'activities'">
+      <li><a routerLink="/attendanceList"><mat-icon>business</mat-icon> Attendances</a></li>
+      <li><a routerLink="/marksentrynewList"><mat-icon>attach_money</mat-icon> Marks Entry</a></li>
+    </ul>
+
+    <!-- Examination -->
+    <li (click)="toggleMenu('exam')">
+      <span class="menu-icon material-icons">school</span>
+      <span class="menu-text">Examination</span>
+    </li>
+    <ul *ngIf="openMenu === 'exam'">
+      <li><a routerLink="/exam-types"><mat-icon>business</mat-icon> Exam-types</a></li>
+      <li><a routerLink="/examSchedule"><mat-icon>attach_money</mat-icon> Exam-Schedule</a></li>
+      <li><a routerLink="/examScheduleStandard"><mat-icon>attach_money</mat-icon> Exam-Schedule Standard</a></li>
+    </ul>
+
+    <!-- Subjects -->
+    <li (click)="toggleMenu('subjects')">
+      <span class="menu-icon material-icons">menu_book</span>
+      <span class="menu-text">Subjects</span>
+    </li>
+    <ul *ngIf="openMenu === 'subjects'">
+      <li><a routerLink="/subjects"><mat-icon>business</mat-icon> Subject List</a></li>
+      <li><a routerLink="/standards"><mat-icon>business</mat-icon> Standards</a></li>
+    </ul>
+
+    <!-- Payment -->
+    <li (click)="toggleMenu('payment')">
+      <span class="menu-icon material-icons">payments</span>
+      <span class="menu-text">Payment</span>
+    </li>
+    <ul *ngIf="openMenu === 'payment'">
+      <li><a routerLink="/fee-types"><mat-icon>list_alt</mat-icon> Fee Types</a></li>
+      <li><a routerLink="/fees"><mat-icon>attach_money</mat-icon> Fee Amount</a></li>
+      <li><a routerLink="/pmaymentdetails"><mat-icon>receipt</mat-icon> Payment Details</a></li>
+      <li><a routerLink="/monthlypayment"><mat-icon>event</mat-icon> Monthly Payment</a></li>
+      <li><a routerLink="/otherpayment"><mat-icon>money</mat-icon> Other Payment</a></li>
+    </ul>
+
+    <!-- Manage -->
+    <li (click)="toggleMenu('manage')">
+      <span class="menu-icon material-icons">manage_accounts</span>
+      <span class="menu-text">Manage</span>
+    </li>
+    <ul *ngIf="openMenu === 'manage'">
+      <li><a routerLink="/userlist"><mat-icon>people</mat-icon> Users</a></li>
+      <li><a routerLink="/role-index"><mat-icon>people</mat-icon> Roles</a></li>
+    </ul>
+
+    <!-- Profile -->
+    <li>
+      <a routerLink="/profile" routerLinkActive="active">
+        <span class="menu-icon material-icons">account_circle</span>
+        <span class="menu-text">Profile</span>
+      </a>
+    </li>
+  </ul>
+</div>
+
+
+<style>
+
+  .sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: #322653;
+  /* background: linear-gradient(180deg, #2c3e50, #34495e); */
+  color: #ecf0f1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar show/hide */
+.showSidebar {
+  transform: translateX(0);
+}
+.hideSidebar {
+  transform: translateX(-100%);
+}
+
+/* Sidebar Menu */
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px 0;
+}
+
+.sidebar li {
+  padding: 12px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s, padding-left 0.3s;
+  background: #5352b4;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* Hover effect */
+.sidebar li:hover {
+  /* background: rgba(255, 255, 255, 0.15); */
+  background: #1abc9c;
+  padding-left: 28px;
+  border-radius: 10px;
+}
+
+/* Active link */
+.sidebar a.active {
+  background: #1abc9c;
+  color: #fff !important;
+  border-radius: 6px;
+  padding: 10px 18px;
+}
+
+/* Active link */
+.sidebar a.hover {
+  background: transparent;
+}
+
+/* Menu Icons */
+.sidebar .menu-icon,
+.sidebar mat-icon {
+  margin-right: 10px;
+  font-size: 22px;
+  color: #1abc9c;
+  transition: transform 0.3s;
+  margin-top: 5px;
+}
+
+/* Rotate icon slightly on hover */
+.sidebar li:hover .menu-icon,
+.sidebar li:hover mat-icon {
+  transform: scale(1.2);
+  color: #f39c12;
+  background: transparent;
+
+}
+
+
+
+.sidebar ul li a{
+  padding: 8px 12px;
+  background: transparent;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 15px;
+
+}
+
+.sidebar ul li a:hover{
+  padding: 8px 12px;
+    background: transparent;
+    color: #f39c12;
+    transform: scale(1.2);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+
+
+
+.sidebar li:hover .menu-text {
+  transform: scale(1.2);
+  color: #f39c12;
+  background: transparent;
+
+}
+
+
+/* Submenu */
+.sidebar ul ul {
+  padding-left: 30px;
+  background: rgb(111, 96, 238);
+  display: block;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  padding: 5px 0;
+}
+
+.sidebar ul ul li {
+  font-size: 14px;
+  padding: 5px 10px;
+  background: transparent;
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  /* background: #1abc9c; */
+  border-radius: 10px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}               
+</style>
+
+<!-- <div class="sidebar" [ngClass]="{ 'showSidebar': isSidebarVisible, 'hideSidebar': !isSidebarVisible }" [@fadeInOut]>
+  <ul>
+    <li>
+      <a routerLink="/home" routerLinkActive="active">
+        <span class="menu-icon material-icons">home</span>
+        <span class="menu-text">Home</span>
+      </a>
+    </li>
+
+    <li>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <span class="menu-icon material-icons">dashboard</span>
+        <span class="menu-text">Dashboard</span>
+      </a>
+    </li>
+
+
+    <li>
+      <a routerLink="/grades" routerLinkActive="active">
+        <span class="menu-icon material-icons">grade</span>
+        <span class="menu-text">Grade</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/schedule" routerLinkActive="active">
+        <span class="menu-icon material-icons">schedule</span>
+        <span class="menu-text">Schedule</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/timetable" routerLinkActive="active">
+        <span class="menu-icon material-icons">access_time</span>
+        <span class="menu-text">Time Table</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/settings" routerLinkActive="active">
+        <span class="menu-icon material-icons">settings</span>
+        <span class="menu-text">Setting</span>
+      </a>
+    </li>
+  </ul>
+</div> -->
