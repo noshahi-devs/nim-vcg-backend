@@ -22,7 +22,7 @@ namespace SchoolApp.DAL.SchoolContext
         public SchoolDbContext CreateDbContext(string[] args)
         {
             var optionBuilder = new DbContextOptionsBuilder<SchoolDbContext>();
-            optionBuilder.UseSqlServer("Server=DESKTOP-LN4FA6Q\\SQLEXPRESS;Database = SchoolSystemDb;Trusted_Connection=True;TrustServerCertificate=True;");
+            optionBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database = SchoolSystemDb;Trusted_Connection=True;TrustServerCertificate=True;");
 
             return new SchoolDbContext(optionBuilder.Options);
 

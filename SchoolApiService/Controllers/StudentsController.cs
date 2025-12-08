@@ -13,7 +13,7 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly SchoolDbContext _context;
@@ -92,7 +92,7 @@ namespace SchoolApiService.Controllers
         // POST: api/Students
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Roles = "Admin, Operator")]
+        //[Authorize(Roles = "Admin, Operator")]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
             // Check if the StandardId is valid

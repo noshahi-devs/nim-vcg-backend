@@ -1,4 +1,4 @@
-using FastReport.Data;
+﻿using FastReport.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -189,9 +189,46 @@ namespace SchoolApiService
 
 
 
+            //var app = builder.Build();
+
+            //// Configure the HTTP request pipeline.
+            //if (app.Environment.IsDevelopment())
+            //{
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI();
+            //    app.UseStatusCodePages();
+            //}
+
+            //app.UseStaticFiles();
+
+            //app.UseHttpsRedirection();
+
+            ////app.UseCors(MyAllowSpecificOrigins);
+
+
+            //app.UseAuthentication();
+
+            //app.UseAuthorization();
+
+            //app.UseCors(opt =>
+            //{
+            //    opt.AllowAnyHeader();
+            //    opt.AllowAnyMethod();
+            //    opt.AllowAnyOrigin();
+            //});
+
+            ////app.UseCors(MyAllowSpecificOrigins);
+
+            //app.MapControllers();
+
+
+            //app.UseFastReport();
+
+
+            //app.Run();
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -199,33 +236,29 @@ namespace SchoolApiService
                 app.UseStatusCodePages();
             }
 
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseHttpsRedirection();
-
-            //app.UseCors(MyAllowSpecificOrigins);
-
-
-            app.UseAuthentication();
-
-            app.UseAuthorization();
-
+            // ⭐ CORS MUST BE BEFORE Authentication
             app.UseCors(opt =>
             {
-                opt.AllowAnyHeader();
-                opt.AllowAnyMethod();
-                opt.AllowAnyOrigin();
+                opt.AllowAnyHeader()
+                   .AllowAnyMethod()
+                   .AllowAnyOrigin();
             });
 
-            //app.UseCors(MyAllowSpecificOrigins);
+            // Authentication & Authorization AFTER CORS
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
 
-
+            // FastReport
             app.UseFastReport();
 
-
+            // Run the app
             app.Run();
+
         }
     }
 }

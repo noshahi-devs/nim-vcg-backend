@@ -45,8 +45,8 @@ namespace SchoolApp.Models.DataModels
 
         public string? StudentNationality { get; set; }
 
-        [RegularExpression("^[0-9]*$", ErrorMessage = "NID number should contain only numeric characters")]
-        [StringLength(17, MinimumLength = 17, ErrorMessage = "NID number should be 17 digits")]
+        //[RegularExpression("^[0-9]*$", ErrorMessage = "NID number should contain only numeric characters")]
+        //[StringLength(17, MinimumLength = 17, ErrorMessage = "NID number should be 17 digits")]
         public string? StudentNIDNumber { get; set; }
 
         public string? StudentContactNumber1 { get; set; }
@@ -60,18 +60,21 @@ namespace SchoolApp.Models.DataModels
 
         public string? TemporaryAddress { get; set; }
 
+
+        //public string? FatherProfession { get; set; }
+
         public string? FatherName { get; set; }
 
-        [RegularExpression("^[0-9]*$", ErrorMessage = "Father's NID number should contain only numeric characters")]
-        [StringLength(17, MinimumLength = 17, ErrorMessage = "Father's NID number should be 17 digits")]
+        //[RegularExpression("^[0-9]*$", ErrorMessage = "Father's NID number should contain only numeric characters")]
+        //[StringLength(17, MinimumLength = 17, ErrorMessage = "Father's NID number should be 17 digits")]
         public string? FatherNID { get; set; }
 
         public string? FatherContactNumber { get; set; }
 
         public string? MotherName { get; set; }
 
-        [RegularExpression("^[0-9]*$", ErrorMessage = "Mother's NID number should contain only numeric characters")]
-        [StringLength(17, MinimumLength = 17, ErrorMessage = "Mother's NID number should be 17 digits")]
+        //[RegularExpression("^[0-9]*$", ErrorMessage = "Mother's NID number should contain only numeric characters")]
+        //[StringLength(17, MinimumLength = 17, ErrorMessage = "Mother's NID number should be 17 digits")]
         public string? MotherNID { get; set; }
 
         public string? MotherContactNumber { get; set; }
