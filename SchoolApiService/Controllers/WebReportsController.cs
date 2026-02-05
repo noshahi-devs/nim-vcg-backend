@@ -9,18 +9,10 @@ namespace SchoolApiService.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    public class WebReportsController : ControllerBase
+    public class WebReportsController(SchoolDbContext context, IWebHostEnvironment webHost) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-        private readonly IWebHostEnvironment _webHost;
-        private FastReport.Export.Image.ImageExport? imgExp;
-        private PDFSimpleExport? pdfExp;
-
-        public WebReportsController(SchoolDbContext context, IWebHostEnvironment webHost)
-        {
-            _context = context;
-            _webHost = webHost;
-        }
+        private readonly SchoolDbContext _context = context;
+        private readonly IWebHostEnvironment _webHost = webHost;
 
 
         [HttpGet()]

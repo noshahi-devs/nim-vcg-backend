@@ -7,14 +7,9 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GeneralIncomesController : ControllerBase
+    public class GeneralIncomesController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public GeneralIncomesController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GeneralIncome>>> GetGeneralIncomes()

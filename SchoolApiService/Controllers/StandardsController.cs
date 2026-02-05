@@ -113,24 +113,47 @@ namespace SchoolApiService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStandard(int id)
         {
-            var standard = await _context.dbsStandard.FindAsync(id);
+            var standard = await _context.dbsStandard
+                .Include(s => s.Students)
+                .Include(s => s.Subjects)
+                .Include(s => s.ExamScheduleStandards)
+                .FirstOrDefaultAsync(s => s.StandardId == id);
+
             if (standard == null)
             {
                 return NotFound();
             }
 
             // Check if there are any students referencing this standard
-            var hasStudents = await _context.dbsStudent.AnyAsync(s => s.StandardId == id);
-            if (hasStudents)
+            if (standard.Students != null && standard.Students.Any())
             {
-                // Return an error message or prompt user to handle students first
-                return BadRequest("Cannot delete Standard with associated Students.");
+                return BadRequest($"Cannot delete Class. It has {standard.Students.Count} associated Students.");
             }
 
-            _context.dbsStandard.Remove(standard);
-            await _context.SaveChangesAsync();
+            // Check for Subjects
+             if (standard.Subjects != null && standard.Subjects.Any())
+            {
+                 // Optionally: You could remove subjects from the standard if it's a many-to-many link, 
+                 // but for now let's prevent delete to be safe.
+                 return BadRequest($"Cannot delete Class. It has {standard.Subjects.Count} associated Subjects.");
+            }
 
-            return NoContent();
+            // Check for Exams
+             if (standard.ExamScheduleStandards != null && standard.ExamScheduleStandards.Any())
+            {
+                 return BadRequest($"Cannot delete Class. It has {standard.ExamScheduleStandards.Count} associated Exams scheduled.");
+            }
+
+            try 
+            {
+                _context.dbsStandard.Remove(standard);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
 

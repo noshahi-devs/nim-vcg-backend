@@ -230,6 +230,73 @@ namespace SchoolApiService.Controllers
             return NoContent();
         }
 
+        [HttpGet("Report/Class/{classId}")]
+        public async Task<ActionResult> GetClassWiseReport(int classId, [FromQuery] DateTime date)
+        {
+            // Find students in this class
+            var students = await _context.dbsStudent
+                .Where(s => s.StandardId == classId)
+                .ToListAsync();
+
+            if (!students.Any()) return Ok(new List<object>());
+
+            var studentIds = students.Select(s => s.StudentId).ToList();
+
+            // Get attendance for these students on this date
+            var attendances = await _context.dbsAttendance
+                .Where(a => a.Type == AttendanceType.Student && 
+                            studentIds.Contains(a.AttendanceIdentificationNumber) &&
+                            a.Date.Date == date.Date)
+                .ToListAsync();
+
+            var report = students.Select(s => new {
+                StudentId = s.StudentId,
+                StudentName = s.StudentName,
+                RollNo = s.EnrollmentNo,
+                IsPresent = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StudentId)?.IsPresent ?? false,
+                Status = attendances.Any(a => a.AttendanceIdentificationNumber == s.StudentId) ? 
+                         (attendances.First(a => a.AttendanceIdentificationNumber == s.StudentId).IsPresent ? "Present" : "Absent") : "Unmarked"
+            });
+
+            return Ok(report);
+        }
+
+        [HttpGet("Report/Student/{studentId}")]
+        public async Task<ActionResult> GetStudentReport(int studentId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            var report = await _context.dbsAttendance
+                .Where(a => a.Type == AttendanceType.Student && 
+                            a.AttendanceIdentificationNumber == studentId &&
+                            a.Date >= startDate && a.Date <= endDate)
+                .OrderBy(a => a.Date)
+                .Select(a => new {
+                    Date = a.Date,
+                    Status = a.IsPresent ? "Present" : "Absent",
+                    Remarks = a.Description
+                })
+                .ToListAsync();
+
+            return Ok(report);
+        }
+
+        [HttpGet("Report/Staff/{staffId}")]
+        public async Task<ActionResult> GetStaffReport(int staffId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            var report = await _context.dbsAttendance
+                .Where(a => a.Type == AttendanceType.Staff && 
+                            a.AttendanceIdentificationNumber == staffId &&
+                            a.Date >= startDate && a.Date <= endDate)
+                .OrderBy(a => a.Date)
+                .Select(a => new {
+                    Date = a.Date,
+                    Status = a.IsPresent ? "Present" : "Absent",
+                    Remarks = a.Description
+                })
+                .ToListAsync();
+
+            return Ok(report);
+        }
+
         private bool AttendanceExists(int id)
         {
             return _context.dbsAttendance.Any(e => e.AttendanceId == id);

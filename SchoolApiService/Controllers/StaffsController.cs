@@ -15,14 +15,9 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class StaffsController : ControllerBase
+    public class StaffsController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public StaffsController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
 
         [HttpGet]
@@ -266,7 +261,7 @@ namespace SchoolApiService.Controllers
             }
 
             // Remove associated StaffExperience entries
-            _context.dbsStaffExperience.RemoveRange(staff.StaffExperiences);
+            _context.dbsStaffExperience.RemoveRange(staff.StaffExperiences ?? new List<StaffExperience>());
 
             _context.dbsStaff.Remove(staff);
             await _context.SaveChangesAsync();

@@ -12,14 +12,9 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class StaffExperiencesController : ControllerBase
+    public class StaffExperiencesController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public StaffExperiencesController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
         // GET: api/StaffExperiences
         [HttpGet]

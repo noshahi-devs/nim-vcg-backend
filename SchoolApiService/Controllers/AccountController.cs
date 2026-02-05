@@ -11,25 +11,16 @@ namespace SchoolApiService.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
-    public class UsersController : ControllerBase
-    {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly SchoolDbContext _context;
-        private readonly ITokenService _tokenService;
-
-        public UsersController(
+    public class UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             SchoolDbContext context,
-            ITokenService tokenService, ILogger<UsersController> logger
-            )
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _context = context;
-            _tokenService = tokenService;
-        }
+            ITokenService tokenService) : ControllerBase
+    {
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly SchoolDbContext _context = context;
+        private readonly ITokenService _tokenService = tokenService;
 
 
         [HttpPost]
@@ -288,9 +279,22 @@ namespace SchoolApiService.Controllers
 
         [HttpPost]
         [Route("logout")]
-        public async Task<ActionResult> Logout()
+        public Task<ActionResult> Logout()
         {
-            return Ok();
+            return Task.FromResult<ActionResult>(Ok());
+        }
+
+        [HttpDelete("delete-user/{id}")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound("User not found");
+            
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded) return Ok();
+            
+            return BadRequest(result.Errors);
         }
     }
 }

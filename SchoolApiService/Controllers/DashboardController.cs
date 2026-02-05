@@ -6,14 +6,9 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DashboardController : ControllerBase
+    public class DashboardController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public DashboardController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetDashboardStats()

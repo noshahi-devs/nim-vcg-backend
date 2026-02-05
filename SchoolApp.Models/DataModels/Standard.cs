@@ -18,7 +18,18 @@ namespace SchoolApp.Models.DataModels
         public int StandardId { get; set; }
         [Required]
         public string? StandardName { get; set; }
+        [NotMapped]
+        public string? StandardCode { get; set; }
+        [NotMapped]
+        public string? GradeLevel { get; set; }
+        [NotMapped]
+        public string? RoomNo { get; set; }
+        [NotMapped]
         public string? StandardCapacity { get; set; }
+        [NotMapped]
+        public string? Remarks { get; set; }
+        [NotMapped]
+        public string? Status { get; set; } // Active/Inactive
         public virtual ICollection<Subject>? Subjects { get; set; }
         public virtual ICollection<ExamScheduleStandard>? ExamScheduleStandards { get; set; }
         public virtual ICollection<Student>? Students { get; set; } = [];

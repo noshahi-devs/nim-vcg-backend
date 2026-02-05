@@ -16,14 +16,9 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class MarkEntriesController : ControllerBase
+    public class MarkEntriesController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public MarkEntriesController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
         
         [HttpGet]

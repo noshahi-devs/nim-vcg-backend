@@ -17,14 +17,9 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class MarksController : ControllerBase
+    public class MarksController(SchoolDbContext context) : ControllerBase
     {
-        private readonly SchoolDbContext _context;
-
-        public MarksController(SchoolDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SchoolDbContext _context = context;
 
         #region HttpGet
         [HttpGet]
@@ -94,16 +89,16 @@ namespace SchoolApiService.Controllers
 
             // Why the following lines of code instead of the above two approaches? Answer: If the mark is updated without giving values of StudentId and SubjectId, it updates the Mark but it sets the StudentId and SubjectId to 'Null'.
             // Update only the received properties
-            _context.Entry(mark).Property(p => p.TotalMarks).IsModified = mark.TotalMarks != null;
-            _context.Entry(mark).Property(p => p.PassMarks).IsModified = mark.PassMarks != null;
-            _context.Entry(mark).Property(p => p.ObtainedScore).IsModified = mark.ObtainedScore != null;
-            _context.Entry(mark).Property(p => p.Grade).IsModified = mark.Grade != null;
-            _context.Entry(mark).Property(p => p.PassStatus).IsModified = mark.PassStatus != null;
+            _context.Entry(mark).Property(p => p.TotalMarks).IsModified = true;
+            _context.Entry(mark).Property(p => p.PassMarks).IsModified = true;
+            _context.Entry(mark).Property(p => p.ObtainedScore).IsModified = true;
+            _context.Entry(mark).Property(p => p.Grade).IsModified = true;
+            _context.Entry(mark).Property(p => p.PassStatus).IsModified = true;
             _context.Entry(mark).Property(p => p.MarkEntryDate).IsModified = mark.MarkEntryDate != null;
             _context.Entry(mark).Property(p => p.Feedback).IsModified = mark.Feedback != null;
-            _context.Entry(mark).Property(p => p.StaffId).IsModified = mark.StaffId != null;
-            _context.Entry(mark).Property(p => p.StudentId).IsModified = mark.StudentId != null;
-            _context.Entry(mark).Property(p => p.SubjectId).IsModified = mark.SubjectId != null;
+            _context.Entry(mark).Property(p => p.StaffId).IsModified = true;
+            _context.Entry(mark).Property(p => p.StudentId).IsModified = true;
+            _context.Entry(mark).Property(p => p.SubjectId).IsModified = true;
 
 
             try

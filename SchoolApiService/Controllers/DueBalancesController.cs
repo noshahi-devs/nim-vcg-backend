@@ -25,7 +25,10 @@ namespace SchoolApiService.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DueBalance>>> GetdbsDueBalance()
         {
-            return await _context.dbsDueBalance.ToListAsync();
+            return await _context.dbsDueBalance
+                .Include(d => d.Student)
+                .ThenInclude(s => s.Standard)
+                .ToListAsync();
         }
 
         // GET: api/DueBalances/5

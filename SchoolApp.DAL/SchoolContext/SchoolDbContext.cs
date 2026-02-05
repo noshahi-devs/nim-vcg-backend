@@ -46,6 +46,12 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<StudentMarksDetails> dbsStudentMarksDetails { get; set; }
         public DbSet<GeneralIncome> GeneralIncomes { get; set; }
         public DbSet<GeneralExpense> GeneralExpenses { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        public DbSet<Leave> Leaves { get; set; }
+        public DbSet<LeaveTypeMaster> LeaveTypeMasters { get; set; }
+        public DbSet<BankAccount> BankAccounts { get; set; }
+        public DbSet<PaymentGatewaySetting> PaymentGatewaySettings { get; set; }
+
 
 
 
