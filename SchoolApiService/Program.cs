@@ -124,6 +124,20 @@ namespace SchoolApiService
 
             builder.Services.AddScoped<ITokenService, TokenService>();
 
+            // ========================
+            // Email Notification System
+            // ========================
+            builder.Services.Configure<SchoolApp.Models.Email.EmailSettings>(
+                builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.Configure<SchoolApp.Models.Email.NotificationSettings>(
+                builder.Configuration.GetSection("NotificationSettings"));
+            builder.Services.Configure<SchoolApp.Models.Email.InstituteInfo>(
+                builder.Configuration.GetSection("InstituteInfo"));
+            
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            // ========================
+
+
 
             #region Excluded
             //builder.Services.AddAuthentication(opt =>

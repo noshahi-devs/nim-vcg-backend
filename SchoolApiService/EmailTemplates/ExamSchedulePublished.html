@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Schedule Published</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 140px;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #667eea;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #5568d3;
+        }
+
+        .footer {
+            background-color: #2d3748;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}}">
+            <h1>📚 Exam Schedule Published</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{StudentName}}</strong>,</p>
+
+            <p>The exam schedule for <span class="highlight">{{ExamName}}</span> has been published. Please review the
+                details below:</p>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Exam Name:</span>
+                    <span class="info-value">{{ExamName}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Class:</span>
+                    <span class="info-value">{{ClassName}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Subject:</span>
+                    <span class="info-value">{{SubjectName}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Exam Date:</span>
+                    <span class="info-value">{{ExamDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Time:</span>
+                    <span class="info-value">{{ExamTime}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Duration:</span>
+                    <span class="info-value">{{Duration}} minutes</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Marks:</span>
+                    <span class="info-value">{{TotalMarks}}</span>
+                </div>
+            </div>
+
+            <p><strong>Important Instructions:</strong></p>
+            <ul>
+                <li>Please arrive 15 minutes before the exam time</li>
+                <li>Bring your admit card and ID card</li>
+                <li>Calculator usage: {{CalculatorAllowed}}</li>
+                <li>Contact the examination office for any queries</li>
+            </ul>
+
+            <p style="text-align: center;">
+                <a href="{{InstituteWebsite}}/exam-schedule" class="btn">View Full Schedule</a>
+            </p>
+
+            <p>Best wishes for your preparation!</p>
+
+            <p>
+                Regards,<br>
+                <strong>Examination Department</strong><br>
+                {{InstituteName}}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{InstituteName}}</strong></p>
+            <p>{{InstituteAddress}}</p>
+            <p>Phone: {{InstitutePhone}} | Email: {{InstituteEmail}}</p>
+            <p><a href="{{InstituteWebsite}}">Visit Our Website</a></p>
+            <p style="margin-top: 15px; color: #a0aec0; font-size: 11px;">
+                This is an automated email. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

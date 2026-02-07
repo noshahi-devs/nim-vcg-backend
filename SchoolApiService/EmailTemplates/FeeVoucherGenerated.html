@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Voucher Generated</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .voucher-card {
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 25px 0;
+        }
+
+        .voucher-header {
+            background-color: #667eea;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .voucher-body {
+            padding: 25px;
+        }
+
+        .amount-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .amount-box h2 {
+            margin: 0;
+            font-size: 36px;
+        }
+
+        .amount-box p {
+            margin: 5px 0 0 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            background-color: #667eea;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: #5568d3;
+        }
+
+        .warning-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background-color: #2d3748;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}}">
+            <h1>💳 Fee Voucher Generated</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{StudentName}}</strong>,</p>
+
+            <p>Your fee voucher for <strong>{{Month}}</strong> has been generated. Please find the details below:</p>
+
+            <div class="voucher-card">
+                <div class="voucher-header">
+                    <h3 style="margin: 0;">FEE VOUCHER</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 14px;">Voucher No: {{VoucherNumber}}</p>
+                </div>
+                <div class="voucher-body">
+                    <div class="info-row">
+                        <span class="info-label">Student Name:</span>
+                        <span class="info-value">{{StudentName}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Class:</span>
+                        <span class="info-value">{{ClassName}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Roll Number:</span>
+                        <span class="info-value">{{RollNumber}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fee Month:</span>
+                        <span class="info-value">{{Month}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tuition Fee:</span>
+                        <span class="info-value">{{TuitionFee}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Transport Fee:</span>
+                        <span class="info-value">{{TransportFee}}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Other Charges:</span>
+                        <span class="info-value">{{OtherCharges}}</span>
+                    </div>
+                    <div class="info-row" style="border-bottom: 2px solid #667eea; margin-top: 10px;">
+                        <span class="info-label" style="font-size: 18px;">Total Amount:</span>
+                        <span class="info-value"
+                            style="font-size: 18px; font-weight: 700; color: #667eea;">{{TotalAmount}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="amount-box">
+                <p style="font-size: 14px; margin: 0;">TOTAL PAYABLE</p>
+                <h2>{{TotalAmount}}</h2>
+                <p>Due Date: <strong>{{DueDate}}</strong></p>
+            </div>
+
+            <div class="warning-box">
+                <p style="margin: 0 0 10px 0;"><strong>⚠️ Important Notice:</strong></p>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Payment must be made before <strong>{{DueDate}}</strong></li>
+                    <li>Late fee of <strong>{{LateFee}}</strong> will be charged after due date</li>
+                    <li>Keep the payment receipt for your records</li>
+                    <li>Contact accounts office for payment methods</li>
+                </ul>
+            </div>
+
+            <p><strong>Payment Methods:</strong></p>
+            <ul>
+                <li>Bank Transfer: Account # 1234567890 (HBL)</li>
+                <li>Online Payment: Visit student portal</li>
+                <li>Cash/Cheque: Visit accounts office</li>
+            </ul>
+
+            <p style="text-align: center;">
+                <a href="{{InstituteWebsite}}/fee/pay?voucher={{VoucherNumber}}" class="btn">Pay Online Now</a>
+            </p>
+
+            <p>
+                For any queries, please contact our accounts department.<br><br>
+                Best Regards,<br>
+                <strong>Accounts Department</strong><br>
+                {{InstituteName}}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{InstituteName}}</strong></p>
+            <p>{{InstituteAddress}}</p>
+            <p>Phone: {{InstitutePhone}} | Email: {{InstituteEmail}}</p>
+            <p><a href="{{InstituteWebsite}}">Visit Our Website</a></p>
+            <p style="margin-top: 15px; color: #a0aec0; font-size: 11px;">
+                This is an automated email. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

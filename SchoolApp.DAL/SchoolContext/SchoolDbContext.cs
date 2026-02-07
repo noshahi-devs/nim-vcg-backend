@@ -52,6 +52,10 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<PaymentGatewaySetting> PaymentGatewaySettings { get; set; }
 
+        // Email Notification System
+        public DbSet<NotificationLog> NotificationLogs { get; set; }
+        public DbSet<NotificationSettingsDb> NotificationSettings { get; set; }
+
 
 
 

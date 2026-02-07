@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Login Alert</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .alert-box {
+            background-color: #fff5f5;
+            border: 2px solid #fc8181;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .alert-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background-color: #f7fafc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #f093fb;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 150px;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #f5576c;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #e14051;
+        }
+
+        .footer {
+            background-color: #2d3748;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #f093fb;
+            text-decoration: none;
+        }
+
+        .not-you {
+            background-color: #fef5e7;
+            border-left: 4px solid: #f39c12;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}}">
+            <h1>🔐 New Login Detected</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{UserName}}</strong>,</p>
+
+            <div class="alert-box">
+                <div class="alert-icon">🔔</div>
+                <p style="text-align: center; margin: 0; font-size: 16px; color: #742a2a;">
+                    We detected a new login to your <strong>{{InstituteName}}</strong> account.
+                </p>
+            </div>
+
+            <p>If this was you, you can safely ignore this email. Here are the details of the login:</p>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Login Time:</span>
+                    <span class="info-value">{{LoginTime}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">IP Address:</span>
+                    <span class="info-value">{{IpAddress}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Device:</span>
+                    <span class="info-value">{{Device}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Browser:</span>
+                    <span class="info-value">{{Browser}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value">{{Location}}</span>
+                </div>
+            </div>
+
+            <div class="not-you">
+                <p style="margin: 0 0 10px 0;"><strong>⚠️ Wasn't you?</strong></p>
+                <p style="margin: 0;">If you did not perform this login, please secure your account immediately by:</p>
+                <ul style="margin: 10px 0;">
+                    <li>Changing your password</li>
+                    <li>Contacting IT support</li>
+                    <li>Reviewing recent account activity</li>
+                </ul>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="{{InstituteWebsite}}/reset-password" class="btn">Reset Password Now</a>
+                </p>
+            </div>
+
+            <p style="margin-top: 25px; color: #666; font-size: 14px;">
+                <strong>Security Tips:</strong>
+            </p>
+            <ul style="color: #666; font-size: 14px;">
+                <li>Always use a strong, unique password</li>
+                <li>Never share your login credentials with anyone</li>
+                <li>Log out when using shared devices</li>
+                <li>Enable two-factor authentication if available</li>
+            </ul>
+
+            <p>
+                Stay Secure,<br>
+                <strong>IT Security Team</strong><br>
+                {{InstituteName}}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{InstituteName}}</strong></p>
+            <p>{{InstituteAddress}}</p>
+            <p>Phone: {{InstitutePhone}} | Email: {{InstituteEmail}}</p>
+            <p><a href="{{InstituteWebsite}}">Visit Our Website</a></p>
+            <p style="margin-top: 15px; color: #a0aec0; font-size: 11px;">
+                This is an automated security alert. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

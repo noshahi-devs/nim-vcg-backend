@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results Announced</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 26px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .result-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .result-card p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #11998e;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            background-color: #11998e;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 25px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: #0e8074;
+        }
+
+        .footer {
+            background-color: #2d3748;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #38ef7d;
+            text-decoration: none;
+        }
+
+        .highlight {
+            color: #11998e;
+            font-weight: 600;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}}">
+            <h1>🎉 Results Announced!</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{StudentName}}</strong>,</p>
+
+            <p>We are pleased to inform you that the results for <span class="highlight">{{ExamName}}</span> have been
+                announced.</p>
+
+            <div class="result-card">
+                <div class="success-icon">✨</div>
+                <h2>{{ExamName}}</h2>
+                <p>Class: {{ClassName}}</p>
+                <p>Published on: {{ResultPublishDate}}</p>
+            </div>
+
+            <div class="info-box">
+                <h3 style="margin-top: 0; color: #333;">Exam Summary</h3>
+                <div class="info-row">
+                    <span class="info-label">Roll Number:</span>
+                    <span class="info-value">{{RollNumber}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Subjects:</span>
+                    <span class="info-value">{{TotalSubjects}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Obtained Marks:</span>
+                    <span class="info-value">{{ObtainedMarks}} / {{TotalMarks}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Percentage:</span>
+                    <span class="info-value">{{Percentage}}%</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Grade:</span>
+                    <span class="info-value"><strong style="font-size: 18px; color: #11998e;">{{Grade}}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Result:</span>
+                    <span class="info-value"><strong style="color: {{ResultColor}};">{{ResultStatus}}</strong></span>
+                </div>
+            </div>
+
+            <p><strong>Next Steps:</strong></p>
+            <ul>
+                <li>Download your detailed result card from the student portal</li>
+                <li>Contact the examination office for any discrepancies</li>
+                <li>Result verification deadline: {{VerificationDeadline}}</li>
+            </ul>
+
+            <p style="text-align: center;">
+                <a href="{{InstituteWebsite}}/student/results" class="btn">View Detailed Result</a>
+            </p>
+
+            <p style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 5px;">
+                <strong>📝 Note:</strong> If you have any queries regarding your result, please contact the examination
+                office within 7 days from the date of result announcement.
+            </p>
+
+            <p>
+                Best Regards,<br>
+                <strong>Examination Department</strong><br>
+                {{InstituteName}}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{InstituteName}}</strong></p>
+            <p>{{InstituteAddress}}</p>
+            <p>Phone: {{InstitutePhone}} | Email: {{InstituteEmail}}</p>
+            <p><a href="{{InstituteWebsite}}">Visit Our Website</a></p>
+            <p style="margin-top: 15px; color: #a0aec0; font-size: 11px;">
+                This is an automated email. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

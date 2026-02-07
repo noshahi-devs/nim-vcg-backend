@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolApiService.Services;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels.SecurityModels;
+using SchoolApp.Models.Email;
 
 namespace SchoolApiService.Controllers
 {
@@ -15,12 +16,14 @@ namespace SchoolApiService.Controllers
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             SchoolDbContext context,
-            ITokenService tokenService) : ControllerBase
+            ITokenService tokenService,
+            IEmailService emailService) : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly SchoolDbContext _context = context;
         private readonly ITokenService _tokenService = tokenService;
+        private readonly IEmailService _emailService = emailService;
 
 
         [HttpPost]
@@ -62,6 +65,30 @@ namespace SchoolApiService.Controllers
             if (result.Succeeded)
             {
                 await _userManager.AddToRolesAsync(user, request.Role);
+
+                // Send Welcome Email
+                try
+                {
+                    var emailData = new Dictionary<string, string>
+                    {
+                        { "UserName", user.UserName ?? "User" },
+                        { "Email", user.Email ?? "" },
+                        { "Role", string.Join(", ", request.Role) },
+                        { "CreatedAt", DateTime.Now.ToString("f") }
+                    };
+
+                    await _emailService.SendNotificationEmailAsync(
+                        NotificationEvent.NewAccountCreation,
+                        user.Email!,
+                        user.UserName ?? "User",
+                        emailData
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send welcome email: {ex.Message}");
+                }
+
                 request.Password = "";
                 return CreatedAtAction(nameof(Register), new { email = request.Email, role = request.Role }, request);
             }
@@ -111,6 +138,39 @@ namespace SchoolApiService.Controllers
 
             var accessToken = _tokenService.CreateToken(userInDb);
             await _context.SaveChangesAsync();
+
+            // Send Login Alert Email
+            try
+            {
+                var userAgent = Request.Headers["User-Agent"].ToString();
+                var browser = "Unknown Browser";
+                if (userAgent.Contains("Chrome")) browser = "Google Chrome";
+                else if (userAgent.Contains("Firefox")) browser = "Mozilla Firefox";
+                else if (userAgent.Contains("Safari") && !userAgent.Contains("Chrome")) browser = "Apple Safari";
+                else if (userAgent.Contains("Edge")) browser = "Microsoft Edge";
+
+                var emailData = new Dictionary<string, string>
+                {
+                    { "UserName", userInDb.UserName ?? "User" },
+                    { "LoginTime", DateTime.Now.ToString("f") },
+                    { "IpAddress", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown" },
+                    { "Device", userAgent.Contains("Windows") ? "Windows PC" : userAgent.Contains("Android") ? "Android Mobile" : userAgent.Contains("iPhone") ? "iPhone" : "Mobile/PC" },
+                    { "Browser", browser },
+                    { "Location", "Not specified (Security Policy)" }
+                };
+
+                await _emailService.SendNotificationEmailAsync(
+                    NotificationEvent.LoginAlert,
+                    userInDb.Email!,
+                    userInDb.UserName ?? "User",
+                    emailData
+                );
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't block login
+                 Console.WriteLine($"Failed to send login email: {ex.Message}");
+            }
 
             return Ok(new AuthResponse
             {

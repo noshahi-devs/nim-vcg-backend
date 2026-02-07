@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Request Approved</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .approval-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .approval-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #11998e;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 35px;
+            background-color: #11998e;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: #0e8074;
+        }
+
+        .footer {
+            background-color: #2d3748;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #38ef7d;
+            text-decoration: none;
+        }
+
+        .note-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}}">
+            <h1>✅ Leave Request Approved</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{TeacherName}}</strong>,</p>
+
+            <div class="approval-card">
+                <div class="approval-icon">✓</div>
+                <h2 style="margin: 0;">Leave Approved!</h2>
+                <p style="margin: 10px 0 0 0; font-size: 16px;">Your leave request has been approved</p>
+            </div>
+
+            <p>We are pleased to inform you that your leave request has been approved by
+                <strong>{{ApprovedBy}}</strong>.</p>
+
+            <div class="info-box">
+                <h3 style="margin-top: 0; color: #333;">Leave Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Leave Type:</span>
+                    <span class="info-value">{{LeaveType}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">From Date:</span>
+                    <span class="info-value">{{FromDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">To Date:</span>
+                    <span class="info-value">{{ToDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Days:</span>
+                    <span class="info-value">{{TotalDays}} days</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Approval Date:</span>
+                    <span class="info-value">{{ApprovalDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Approved By:</span>
+                    <span class="info-value">{{ApprovedBy}}</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4 style="margin-top: 0; color: #333;">Reason for Leave</h4>
+                <p style="margin: 0; color: #555;">{{Reason}}</p>
+            </div>
+
+            <div class="note-box">
+                <p style="margin: 0 0 10px 0;"><strong>📝 Admin Comments:</strong></p>
+                <p style="margin: 0; font-style: italic;">{{Comments}}</p>
+            </div>
+
+            <p><strong>Important Reminders:</strong></p>
+            <ul>
+                <li>Ensure all pending work is completed or delegated</li>
+                <li>Update your out-of-office message</li>
+                <li>Inform your students about your absence</li>
+                <li>Contact HR for any additional requirements</li>
+            </ul>
+
+            <p style="text-align: center;">
+                <a href="{{InstituteWebsite}}/staff/leaves" class="btn">View Leave Details</a>
+            </p>
+
+            <p>We hope you have a pleasant time off. See you when you return!</p>
+
+            <p>
+                Best Regards,<br>
+                <strong>Human Resources Department</strong><br>
+                {{InstituteName}}
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{InstituteName}}</strong></p>
+            <p>{{InstituteAddress}}</p>
+            <p>Phone: {{InstitutePhone}} | Email: {{InstituteEmail}}</p>
+            <p><a href="{{InstituteWebsite}}">Visit Our Website</a></p>
+            <p style="margin-top: 15px; color: #a0aec0; font-size: 11px;">
+                This is an automated email. Please do not reply directly to this message.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
