@@ -89,6 +89,8 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("StandardId")]
         public Standard? Standard { get; set; }
 
+        public string? Section { get; set; }
+
 
         //// Constructor to initialize UniqueAttendanceId
         //public Student()

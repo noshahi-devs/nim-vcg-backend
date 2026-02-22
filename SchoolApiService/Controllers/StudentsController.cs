@@ -64,7 +64,7 @@ namespace SchoolApiService.Controllers
                 student.Standard = await _context.dbsStandard.FindAsync(student.StandardId);
                 if (student.Standard == null)
                 {
-                    return BadRequest("Invalid StandardId");
+                    return BadRequest($"Invalid StandardId: {student.StandardId}");
                 }
             }
 
@@ -101,7 +101,7 @@ namespace SchoolApiService.Controllers
                 student.Standard = await _context.dbsStandard.FindAsync(student.StandardId);
                 if (student.Standard == null)
                 {
-                    return BadRequest("Invalid StandardId");
+                    return BadRequest($"Invalid StandardId: {student.StandardId}");
                 }
             }
 
@@ -111,6 +111,26 @@ namespace SchoolApiService.Controllers
                 student.ImagePath = student.ImageUpload?.ImageData;
             }
 
+            // Automatically generate UniqueStudentAttendanceNumber
+            int nextAttendanceNumber = 1000;
+            int nextAdmissionNo = 1000;
+            int nextEnrollmentNo = 2000;
+
+            if (await _context.dbsStudent.AnyAsync())
+            {
+                nextAttendanceNumber = await _context.dbsStudent.MaxAsync(s => s.UniqueStudentAttendanceNumber) + 1;
+                
+                var maxAdmission = await _context.dbsStudent.MaxAsync(s => s.AdmissionNo);
+                nextAdmissionNo = (maxAdmission ?? 999) + 1;
+
+                var maxEnrollment = await _context.dbsStudent.MaxAsync(s => s.EnrollmentNo);
+                nextEnrollmentNo = (maxEnrollment ?? 1999) + 1;
+            }
+            
+            student.UniqueStudentAttendanceNumber = nextAttendanceNumber;
+            student.AdmissionNo = nextAdmissionNo;
+            student.EnrollmentNo = nextEnrollmentNo;
+
             // Add the student to the context
             _context.dbsStudent.Add(student);
 
@@ -118,9 +138,9 @@ namespace SchoolApiService.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return BadRequest("Unable to save changes. Please try again.");
+                return BadRequest($"Unable to save changes: {ex.InnerException?.Message ?? ex.Message}");
             }
 
             return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);

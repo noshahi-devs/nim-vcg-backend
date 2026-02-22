@@ -107,6 +107,14 @@ namespace SchoolApiService.Controllers
                 }
             }
 
+            // Automatically generate UniqueStaffAttendanceNumber
+            int nextAttendanceNumber = 200;
+            if (await _context.dbsStaff.AnyAsync())
+            {
+                nextAttendanceNumber = await _context.dbsStaff.MaxAsync(s => s.UniqueStaffAttendanceNumber) + 1;
+            }
+            staff.UniqueStaffAttendanceNumber = nextAttendanceNumber;
+
             // Add the Staff to the context
             _context.dbsStaff.Add(staff);
 
@@ -114,12 +122,12 @@ namespace SchoolApiService.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return BadRequest("Unable to save changes. Please try again.");
+                return BadRequest($"Unable to save changes: {ex.InnerException?.Message ?? ex.Message}");
             }
 
-            return CreatedAtAction("GetdbsStaff", new { id = staff.StaffId }, staff);
+            return CreatedAtAction("GetStaff", new { id = staff.StaffId }, staff);
         }
 
 
