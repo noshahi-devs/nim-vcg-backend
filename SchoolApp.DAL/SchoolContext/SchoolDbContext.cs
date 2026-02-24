@@ -51,6 +51,7 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<LeaveTypeMaster> LeaveTypeMasters { get; set; }
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<PaymentGatewaySetting> PaymentGatewaySettings { get; set; }
+        public DbSet<GradeScale> GradeScales { get; set; }
 
         // Email Notification System
         public DbSet<NotificationLog> NotificationLogs { get; set; }
