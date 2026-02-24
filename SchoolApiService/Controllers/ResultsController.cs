@@ -136,5 +136,43 @@ namespace SchoolApiService.Controllers
 
             return Ok(results);
         }
+
+        [HttpGet("student/{studentId}/exam/{examId}")]
+        public async Task<IActionResult> GetResultByStudent(int studentId, int examId)
+        {
+            var studentDetails = await _context.dbsStudentMarksDetails
+                .Where(sd => sd.StudentId == studentId && sd.MarkEntry.ExamScheduleId == examId)
+                .Include(sd => sd.Student)
+                .Include(sd => sd.MarkEntry)
+                .ThenInclude(me => me.Subject)
+                .ToListAsync();
+
+            if (!studentDetails.Any())
+            {
+                // Return Ok with empty subjects instead of NotFound to avoid console errors for valid queries
+                return Ok(new { StudentId = studentId, ExamId = examId, Message = "No results found.", Subjects = new List<object>() });
+            }
+
+            var firstRecord = studentDetails.First();
+            var student = firstRecord.Student;
+
+            var result = new
+            {
+                StudentId = student.StudentId,
+                StudentName = student.StudentName,
+                RollNo = student.AdmissionNo?.ToString(),
+                ExamId = examId,
+                Subjects = studentDetails.Select(sd => new
+                {
+                    SubjectName = sd.MarkEntry?.Subject?.SubjectName ?? "N/A",
+                    TotalMarks = sd.MarkEntry?.TotalMarks ?? 0,
+                    ObtainedMarks = sd.ObtainedScore ?? 0,
+                    Grade = sd.Grade.ToString(),
+                    Status = sd.PassStatus.ToString()
+                }).ToList()
+            };
+
+            return Ok(result);
+        }
     }
 }
