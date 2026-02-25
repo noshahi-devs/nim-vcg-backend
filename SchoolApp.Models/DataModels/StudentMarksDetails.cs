@@ -20,7 +20,7 @@ namespace SchoolApp.Models.DataModels
 
         public int? ObtainedScore { get; set; }
 
-        public GradesSystem? Grade { get; set; } = GradesSystem.A;
+        public string? Grade { get; set; }
 
         public PassFailStatus? PassStatus { get; set; } = PassFailStatus.Passed;
 

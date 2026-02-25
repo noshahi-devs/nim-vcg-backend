@@ -14,9 +14,10 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class ResultsController(SchoolDbContext context) : ControllerBase
+    public class ResultsController(SchoolDbContext context, Services.INotificationService notificationService) : ControllerBase
     {
         private readonly SchoolDbContext _context = context;
+        private readonly Services.INotificationService _notificationService = notificationService;
 
         [HttpPost("generate/{examId}")]
         public async Task<IActionResult> GenerateResults(int examId)
@@ -71,20 +72,9 @@ namespace SchoolApiService.Controllers
 
                         if (matchedScale != null)
                         {
-                            // Map string grade to Enum if possible
-                            // Note: GradesSystem enum has A, B, C, D, E, F
-                            if (Enum.TryParse<GradesSystem>(matchedScale.Grade, true, out var gradeEnum))
-                            {
-                                studentDetail.Grade = gradeEnum;
-                            }
-                            else
-                            {
-                                // Fallback or handle custom grades if needed
-                                // For now, we rely on the enum
-                            }
+                            studentDetail.Grade = matchedScale.Grade;
 
                             // Update Pass/Fail status
-                            // Assuming 50% is pass if not defined in scale
                             // If Grade is 'F', it's a fail
                             if (matchedScale.Grade.Equals("F", StringComparison.OrdinalIgnoreCase))
                             {
@@ -103,6 +93,16 @@ namespace SchoolApiService.Controllers
                 if (updatedCount > 0)
                 {
                     await _context.SaveChangesAsync();
+
+                    // Log Notification Event
+                    await _notificationService.LogEventAsync(
+                        "System Admin",
+                        "N/A",
+                        "Result Generation",
+                        "Completed",
+                        $"Successfully calculated grades for {updatedCount} student records in Exam ID {examId}."
+                    );
+
                     return Ok(new { message = $"Successfully calculated grades for {updatedCount} student records.", updatedCount });
                 }
 

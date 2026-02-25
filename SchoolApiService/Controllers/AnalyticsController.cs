@@ -72,6 +72,9 @@ namespace SchoolApiService.Controllers
                 }).ToList();
                 double averagePercentage = individualPercentages.Any() ? individualPercentages.Average() : 0;
 
+                var exam = await _context.dbsExamSchedule.FindAsync(examId);
+                string examName = exam?.ExamScheduleName ?? "N/A";
+
                 // High/Low Marks
                 var totalObtainedByStudent = studentGroups.Select(g => g.Sum(sd => sd.ObtainedScore ?? 0)).ToList();
                 decimal highestMarks = totalObtainedByStudent.Any() ? totalObtainedByStudent.Max() : 0;
@@ -82,6 +85,22 @@ namespace SchoolApiService.Controllers
                     .OrderByDescending(g => g.Sum(sd => sd.ObtainedScore ?? 0))
                     .FirstOrDefault();
                 string topPerformer = topGroup?.FirstOrDefault()?.StudentName ?? "N/A";
+
+                // Grade Distribution
+                var grades = await _context.GradeScales.ToListAsync();
+                var gradeDistribution = grades.Select(gs => {
+                    int count = studentGroups.Count(g => {
+                        var total = g.Sum(sd => sd.MarkEntry?.TotalMarks ?? 0);
+                        var obtained = g.Sum(sd => sd.ObtainedScore ?? 0);
+                        var percentage = total > 0 ? (double)obtained / total * 100 : 0;
+                        return (decimal)percentage >= gs.MinPercentage && (decimal)percentage <= gs.MaxPercentage;
+                    });
+                    return new {
+                        Grade = gs.Grade,
+                        Count = count,
+                        Percentage = totalStudents > 0 ? Math.Round((double)count / totalStudents * 100, 2) : 0
+                    };
+                }).ToList();
 
                 // Subject-wise Analytics
                 var subjectGroups = marksDetails.GroupBy(sd => sd.MarkEntry.Subject.SubjectName);
@@ -97,6 +116,7 @@ namespace SchoolApiService.Controllers
                 var analytics = new
                 {
                     ExamId = examId,
+                    ExamName = examName,
                     TotalStudents = totalStudents,
                     PassedStudents = passedStudents,
                     FailedStudents = failedStudents,
@@ -105,6 +125,7 @@ namespace SchoolApiService.Controllers
                     HighestMarks = highestMarks,
                     LowestMarks = lowestMarks,
                     TopPerformer = topPerformer,
+                    GradeDistribution = gradeDistribution,
                     SubjectWiseAnalytics = subjectWiseAnalytics
                 };
 

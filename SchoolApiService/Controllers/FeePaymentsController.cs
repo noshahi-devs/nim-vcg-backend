@@ -15,10 +15,12 @@ namespace SchoolApiService.Controllers
     public class FeePaymentsController : ControllerBase
     {
         private readonly SchoolDbContext _context;
+        private readonly Services.INotificationService _notificationService;
 
-        public FeePaymentsController(SchoolDbContext context)
+        public FeePaymentsController(SchoolDbContext context, Services.INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
         [HttpGet]
         public async Task<IActionResult> GetFeePayments()
@@ -156,6 +158,15 @@ namespace SchoolApiService.Controllers
                     SaveFeePaymentDetails(feePayment);
 
                     transaction.Commit();
+
+                    // Log Notification Event
+                    await _notificationService.LogEventAsync(
+                        feePayment.StudentName, 
+                        "N/A", 
+                        "Fee Payment", 
+                        "Logged", 
+                        $"Payment of {feePayment.AmountPaid} received for {feePayment.StudentName}."
+                    );
 
                     return Ok(feePayment);
                 }

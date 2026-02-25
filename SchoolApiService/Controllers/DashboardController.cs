@@ -19,21 +19,9 @@ namespace SchoolApiService.Controllers
                 .CountAsync();
             var totalClasses = await _context.dbsStandard.CountAsync();
 
-            // Calculate Fees Collected (This month)
             var currentMonth = DateTime.Now.Month;
             var currentYear = DateTime.Now.Year;
 
-            // Simplified Fee Calculation: Sum of FeePayments made this month
-            // Assuming FeePayment table handles collection. 
-            // Note: Since FeePayment logic is complex in seed, we'll try to sum AmountPaid from FeePayments if exists, 
-            // or fallback to OthersPayment if that's where miscellaneous income goes.
-            // For now, let's sum GeneralIncome for this demo + potentially fees if I can access the DbSet.
-            // I don't see dbsFeePayment in the Context snippet earlier, but I saw 'fees' DbSet.
-            
-            // Let's check 'fees' table - usually 'fees' contains the structure, not the payment.
-            // Wait, previous file view showed: public DbSet<Fee> fees;
-            // Let's assume for now we sum 'GeneralIncome' and 'OthersPayment' for simplicity as per new feature.
-            
             var totalIncome = await _context.GeneralIncomes
                 .Where(i => i.Date.Month == currentMonth && i.Date.Year == currentYear)
                 .SumAsync(i => i.Amount);
@@ -50,6 +38,57 @@ namespace SchoolApiService.Controllers
                 IncomeThisMonth = totalIncome,
                 ExpenseThisMonth = totalExpense
             });
+        }
+
+        [HttpGet("chart-data")]
+        public async Task<IActionResult> GetChartData()
+        {
+            var last12Months = Enumerable.Range(0, 12)
+                .Select(i => DateTime.Now.AddMonths(-i))
+                .OrderBy(d => d)
+                .ToList();
+
+            var incomeData = new List<decimal>();
+            var expenseData = new List<decimal>();
+            var labels = new List<string>();
+
+            foreach (var month in last12Months)
+            {
+                var income = await _context.GeneralIncomes
+                    .Where(i => i.Date.Month == month.Month && i.Date.Year == month.Year)
+                    .SumAsync(i => i.Amount);
+
+                var expense = await _context.GeneralExpenses
+                    .Where(e => e.Date.Month == month.Month && e.Date.Year == month.Year)
+                    .SumAsync(e => e.Amount);
+
+                incomeData.Add(income);
+                expenseData.Add(expense);
+                labels.Add(month.ToString("MMM"));
+            }
+
+            return Ok(new
+            {
+                Labels = labels,
+                Income = incomeData,
+                Expense = expenseData
+            });
+        }
+
+        [HttpGet("student-distribution")]
+        public async Task<IActionResult> GetStudentDistribution()
+        {
+            var distribution = await _context.dbsStudent
+                .Include(s => s.Standard)
+                .GroupBy(s => s.Standard.StandardName)
+                .Select(g => new
+                {
+                    ClassName = g.Key ?? "Unassigned",
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            return Ok(distribution);
         }
     }
 }

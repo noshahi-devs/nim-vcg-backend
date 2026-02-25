@@ -56,6 +56,7 @@ namespace SchoolApp.DAL.SchoolContext
         // Email Notification System
         public DbSet<NotificationLog> NotificationLogs { get; set; }
         public DbSet<NotificationSettingsDb> NotificationSettings { get; set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
 
 
 
