@@ -33,11 +33,6 @@ namespace SchoolApp.Models.DataModels
         public virtual ICollection<Subject>? Subjects { get; set; }
         public virtual ICollection<ExamScheduleStandard>? ExamScheduleStandards { get; set; }
         public virtual ICollection<Student>? Students { get; set; } = [];
-
-        //[NotMapped]
-        //public int? StudentCount { get; set; } //=> this.Students?.Count;
-        //[NotMapped]
-        //public int? SubjectCount { get; set; }
-
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

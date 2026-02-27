@@ -21,5 +21,6 @@ namespace SchoolApp.Models.DataModels
         public string? Category { get; set; }
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

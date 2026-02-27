@@ -90,20 +90,7 @@ namespace SchoolApp.Models.DataModels
         public Standard? Standard { get; set; }
 
         public string? Section { get; set; }
-
-
-        //// Constructor to initialize UniqueAttendanceId
-        //public Student()
-        //{
-        //    UniqueStudentAttendanceId = "STD-" + GenerateFixedNumbers(); // Generate fixed numbers
-        //}
-
-        //private string GenerateFixedNumbers()
-        //{
-        //    // You can generate a random or sequential number here
-        //    // For simplicity, let's generate a sequential number for demonstration
-        //    return "STD-" + (1000 + StudentId).ToString(); // Example: STD-1001, STD-1002, etc.
-        //}
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
     public enum GenderList
