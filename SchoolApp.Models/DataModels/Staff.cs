@@ -60,47 +60,10 @@ namespace SchoolApp.Models.DataModels
 
     public enum Designation
     {
-        // School Leadership
-        Superintendent,
-        Headmaster,
-        Headmistress,
-        AssistantPrincipal,
-        Dean,
-        Director,
-
-        // Academic Staff
-        DepartmentChair,
-        Professor,
-        Instructor,
-        Lecturer,
-        TeachingAssistant,
-        SpecialEducationTeacher,
-        SubstituteTeacher,
-
-        // Support Staff
-        Counselor,
-        Librarian,
-        MediaSpecialist,
-        LabTechnician,
-        ITSpecialist,
-        BusDriver,
-        LunchAide,
-        Custodian,
-
-        // Administrative Staff
-        Registrar,
-        AdmissionsOfficer,
-        BusinessManager,
-        DevelopmentOfficer,
-        HumanResourcesManager,
-        Receptionist,
-
-        // Other
-        Coach,
-        SecurityGuard,
-        MaintenanceWorker,
-        FoodServiceWorker,
-        Other
+        Teacher,
+        Admin,
+        Principal,
+        Accountant
     }
 
 }

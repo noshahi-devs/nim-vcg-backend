@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolApp.DAL.SchoolContext;
 
@@ -11,9 +12,11 @@ using SchoolApp.DAL.SchoolContext;
 namespace SchoolApp.DAL.Migrations
 {
     [DbContext(typeof(SchoolDbContext))]
-    partial class SchoolDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228192636_AddSubjectAssignmentAndStudentSectionId")]
+    partial class AddSubjectAssignmentAndStudentSectionId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1335,7 +1338,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 1,
                             Feedback = "Good job!",
                             Grade = 1,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4315),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 0, 26, 34, 472, DateTimeKind.Local).AddTicks(1663),
                             ObtainedScore = 65,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -1349,7 +1352,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 2,
                             Feedback = "Excellent work!",
                             Grade = 0,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4322),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 0, 26, 34, 472, DateTimeKind.Local).AddTicks(1668),
                             ObtainedScore = 75,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -1363,7 +1366,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 3,
                             Feedback = "Excellent work!",
                             Grade = 0,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4326),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 0, 26, 34, 472, DateTimeKind.Local).AddTicks(1671),
                             ObtainedScore = 75,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -1911,7 +1914,7 @@ namespace SchoolApp.DAL.Migrations
                             ContactNumber1 = "1234567890",
                             DOB = new DateTime(1985, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentId = 1,
-                            Designation = 3,
+                            Designation = 13,
                             Email = "john.doe@example.com",
                             FatherName = "Michael Doe",
                             Gender = 0,
@@ -1959,7 +1962,7 @@ namespace SchoolApp.DAL.Migrations
                             ContactNumber1 = "555-123-4567",
                             DOB = new DateTime(1980, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DepartmentId = 3,
-                            Designation = 0,
+                            Designation = 7,
                             Email = "john.doe@example.com",
                             FatherName = "Richard Doe",
                             Gender = 0,
