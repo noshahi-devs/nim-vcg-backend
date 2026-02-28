@@ -90,6 +90,7 @@ namespace SchoolApp.Models.DataModels
         public Standard? Standard { get; set; }
 
         public string? Section { get; set; }
+        public string? Status { get; set; }
 
         public int? SectionId { get; set; }
 
