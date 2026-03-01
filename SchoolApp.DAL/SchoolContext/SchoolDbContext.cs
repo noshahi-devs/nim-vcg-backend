@@ -57,8 +57,7 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<NotificationLog> NotificationLogs { get; set; }
         public DbSet<NotificationSettingsDb> NotificationSettings { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
-
-
+        public DbSet<SubjectAssignment> SubjectAssignments { get; set; }
 
 
         #endregion
@@ -96,6 +95,24 @@ namespace SchoolApp.DAL.SchoolContext
                 .HasForeignKey(m => m.SubjectId)
                 .OnDelete(DeleteBehavior.NoAction);
             // Specify ON DELETE NO ACTION
+
+            modelBuilder.Entity<SubjectAssignment>()
+                .HasOne(sa => sa.Staff)
+                .WithMany()
+                .HasForeignKey(sa => sa.StaffId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SubjectAssignment>()
+                .HasOne(sa => sa.Subject)
+                .WithMany()
+                .HasForeignKey(sa => sa.SubjectId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SubjectAssignment>()
+                .HasOne(sa => sa.Section)
+                .WithMany()
+                .HasForeignKey(sa => sa.SectionId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<StaffSalary>(entity =>
             {
@@ -1372,7 +1389,7 @@ new Student
                    //ImagePath = "path/to/image.jpg",
                    Qualifications = "Bachelor's in Computer Science",
                    JoiningDate = new DateTime(2010, 7, 1),
-                   Designation = Designation.Counselor,
+                   Designation = Designation.Accountant,
                    BankAccountName = "John Doe",
                    BankAccountNumber = 1234567890,
                    BankName = "ABC Bank",
@@ -1397,7 +1414,7 @@ new Student
                    //ImagePath = "path/to/image.jpg",
                    Qualifications = "Master's in Education",
                    JoiningDate = new DateTime(2015, 9, 15),
-                   Designation = Designation.Headmistress,
+                   Designation = Designation.Principal,
                    BankAccountName = "Alice Smith",
                    BankAccountNumber = 9873210,
                    BankName = "DEF Bank",
@@ -1421,7 +1438,7 @@ new Student
                    Email = "john.doe@example.com",
                    Qualifications = "Bachelor of Science in Mathematics",
                    JoiningDate = new DateTime(2020, 08, 15),
-                   Designation = Designation.Professor,
+                   Designation = Designation.Teacher,
                    BankAccountName = "John Doe",
                    BankAccountNumber = 1234567890,
                    BankName = "Anytown Bank",

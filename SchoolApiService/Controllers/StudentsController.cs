@@ -68,6 +68,16 @@ namespace SchoolApiService.Controllers
                 }
             }
 
+            if (student.SectionId != null)
+            {
+                student.SectionObject = await _context.Sections.FindAsync(student.SectionId);
+                if (student.SectionObject == null)
+                {
+                    return BadRequest($"Invalid SectionId: {student.SectionId}");
+                }
+                student.Section = student.SectionObject.SectionName; // keeping fallback copy
+            }
+
             _context.Entry(student).State = EntityState.Modified;
 
             try
@@ -103,6 +113,17 @@ namespace SchoolApiService.Controllers
                 {
                     return BadRequest($"Invalid StandardId: {student.StandardId}");
                 }
+            }
+
+            // Check if the SectionId is valid
+            if (student.SectionId != null)
+            {
+                student.SectionObject = await _context.Sections.FindAsync(student.SectionId);
+                if (student.SectionObject == null)
+                {
+                    return BadRequest($"Invalid SectionId: {student.SectionId}");
+                }
+                student.Section = student.SectionObject.SectionName; // keeping fallback copy
             }
 
             // Check if the ImageUpload is provided

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolApp.DAL.SchoolContext;
 
@@ -11,9 +12,11 @@ using SchoolApp.DAL.SchoolContext;
 namespace SchoolApp.DAL.Migrations
 {
     [DbContext(typeof(SchoolDbContext))]
-    partial class SchoolDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228203844_UpdateDesignationRoles")]
+    partial class UpdateDesignationRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1335,7 +1338,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 1,
                             Feedback = "Good job!",
                             Grade = 1,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 2, 33, 13, 853, DateTimeKind.Local).AddTicks(1406),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4315),
                             ObtainedScore = 65,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -1349,7 +1352,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 2,
                             Feedback = "Excellent work!",
                             Grade = 0,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 2, 33, 13, 853, DateTimeKind.Local).AddTicks(1417),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4322),
                             ObtainedScore = 75,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -1363,7 +1366,7 @@ namespace SchoolApp.DAL.Migrations
                             MarkId = 3,
                             Feedback = "Excellent work!",
                             Grade = 0,
-                            MarkEntryDate = new DateTime(2026, 3, 1, 2, 33, 13, 853, DateTimeKind.Local).AddTicks(1423),
+                            MarkEntryDate = new DateTime(2026, 3, 1, 1, 38, 29, 586, DateTimeKind.Local).AddTicks(4326),
                             ObtainedScore = 75,
                             PassMarks = 40,
                             PassStatus = 0,
@@ -2250,9 +2253,6 @@ namespace SchoolApp.DAL.Migrations
 
                     b.Property<int?>("StandardId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StudentBloodGroup")
                         .HasColumnType("nvarchar(max)");
