@@ -154,7 +154,35 @@ namespace SchoolApiService.Controllers
         //} 
         #endregion
 
+        [HttpPost("CheckOut")]
+        public async Task<IActionResult> CheckOut([FromBody] Attendance checkOutInfo)
+        {
+            if (checkOutInfo.Type != AttendanceType.Staff && checkOutInfo.Type != AttendanceType.Student)
+            {
+                return BadRequest("Invalid attendance type.");
+            }
 
+            // Find the most recent check-in record for this person that hasn't been checked out of
+            var attendanceRecord = await _context.dbsAttendance
+                .Where(a => a.Type == checkOutInfo.Type 
+                         && a.AttendanceIdentificationNumber == checkOutInfo.AttendanceIdentificationNumber 
+                         && a.CheckOutTime == null)
+                .OrderByDescending(a => a.Date)
+                .FirstOrDefaultAsync();
+
+            if (attendanceRecord == null)
+            {
+                return NotFound("Check-In record not found for today. Please Check-In first.");
+            }
+
+            // Record check out time
+            attendanceRecord.CheckOutTime = DateTime.Now;
+            _context.Entry(attendanceRecord).State = EntityState.Modified;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(attendanceRecord);
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAttendance(int id, Attendance attendance)

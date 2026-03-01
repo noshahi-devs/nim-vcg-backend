@@ -22,6 +22,7 @@ namespace SchoolApp.Models.DataModels
         public int AttendanceIdentificationNumber { get; set; } = 111;
         public string? Description { get; set; }
         public bool IsPresent { get; set; } = true;          
+        public DateTime? CheckOutTime { get; set; }
     }
 
     public enum AttendanceType
