@@ -58,6 +58,23 @@ namespace SchoolApiService.Controllers
         }
      
 
+        [HttpGet("ByEmail/{email}")]
+        public async Task<ActionResult<Staff>> GetStaffByEmail(string email)
+        {
+            var staff = await _context.dbsStaff
+                .Include(m => m.Department)
+                .Include(m => m.StaffSalary)
+                .Include(m => m.StaffExperiences)
+                .FirstOrDefaultAsync(m => m.Email == email);
+
+            if (staff == null)
+            {
+                return NotFound("Sorry! No Staff found with this email.");
+            }
+
+            return staff;
+        }
+
         #region Default_Post
         //[HttpPost]
         //public async Task<ActionResult<Staff>> PostStaff(Staff staff)

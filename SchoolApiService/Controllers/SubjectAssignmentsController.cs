@@ -26,6 +26,7 @@ namespace SchoolApp.DAL.Controllers
             return await _context.SubjectAssignments
                 .Include(sa => sa.Staff)
                 .Include(sa => sa.Subject)
+                    .ThenInclude(s => s.Standard)
                 .Include(sa => sa.Section)
                 .ToListAsync();
         }
@@ -37,6 +38,7 @@ namespace SchoolApp.DAL.Controllers
             var subjectAssignment = await _context.SubjectAssignments
                 .Include(sa => sa.Staff)
                 .Include(sa => sa.Subject)
+                    .ThenInclude(s => s.Standard)
                 .Include(sa => sa.Section)
                 .FirstOrDefaultAsync(sa => sa.SubjectAssignmentId == id);
 
@@ -59,12 +61,12 @@ namespace SchoolApp.DAL.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/SubjectAssignments/ByTeacher/5
         [HttpGet("ByTeacher/{staffId}")]
         public async Task<ActionResult<IEnumerable<SubjectAssignment>>> GetAssignmentsByTeacher(int staffId)
         {
             return await _context.SubjectAssignments
                 .Include(sa => sa.Subject)
+                    .ThenInclude(s => s.Standard)
                 .Include(sa => sa.Section)
                 .Where(sa => sa.StaffId == staffId)
                 .ToListAsync();
