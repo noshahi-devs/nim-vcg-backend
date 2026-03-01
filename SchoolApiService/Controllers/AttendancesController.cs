@@ -56,14 +56,14 @@ namespace SchoolApiService.Controllers
                 case AttendanceType.Student:
                     data = await _context.dbsStudent.Select(s => new AttList()
                     {
-                        AttId = s.UniqueStudentAttendanceNumber,
+                        AttId = s.StudentId,
                         Name = $"{s.StudentId} - "+s.StudentName
                     }).ToListAsync(); 
                     break;
                 case AttendanceType.Staff:
                     data = await _context.dbsStaff.Select(s => new AttList()
                     {
-                        AttId = s.UniqueStaffAttendanceNumber,
+                        AttId = s.StaffId,
                         Name = $"{s.StaffId} - " + s.StaffName
                     }).ToListAsync();
                     break;
@@ -102,10 +102,10 @@ namespace SchoolApiService.Controllers
             switch (attendance.Type)
             {
                 case AttendanceType.Student:
-                    exists = await _context.dbsStudent.AnyAsync(s => s.UniqueStudentAttendanceNumber == attendance.AttendanceIdentificationNumber);
+                    exists = await _context.dbsStudent.AnyAsync(s => s.StudentId == attendance.AttendanceIdentificationNumber);
                     break;
                 case AttendanceType.Staff:
-                    exists = await _context.dbsStaff.AnyAsync(s => s.UniqueStaffAttendanceNumber == attendance.AttendanceIdentificationNumber);
+                    exists = await _context.dbsStaff.AnyAsync(s => s.StaffId == attendance.AttendanceIdentificationNumber);
                     break;
                 default:
                     return BadRequest("Invalid attendance type.");
@@ -173,7 +173,7 @@ namespace SchoolApiService.Controllers
 
             if (attendance.Type == AttendanceType.Student)
             {
-                var studentExists = await _context.dbsStudent.AnyAsync(s => s.UniqueStudentAttendanceNumber == attendance.AttendanceIdentificationNumber);
+                var studentExists = await _context.dbsStudent.AnyAsync(s => s.StudentId == attendance.AttendanceIdentificationNumber);
                 if (!studentExists)
                 {
                     return BadRequest("Invalid student attendance number");
@@ -181,7 +181,7 @@ namespace SchoolApiService.Controllers
             }
             else if (attendance.Type == AttendanceType.Staff)
             {
-                var staffExists = await _context.dbsStaff.AnyAsync(s => s.UniqueStaffAttendanceNumber == attendance.AttendanceIdentificationNumber);
+                var staffExists = await _context.dbsStaff.AnyAsync(s => s.StaffId == attendance.AttendanceIdentificationNumber);
                 if (!staffExists)
                 {
                     return BadRequest("Invalid staff attendance number");
