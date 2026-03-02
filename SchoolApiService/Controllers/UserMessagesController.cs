@@ -97,6 +97,17 @@ namespace SchoolApiService.Controllers
                                    .FirstOrDefault(v => Guid.TryParse(v, out _));
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+            if (message.ReceiverId == "System Broadcast")
+            {
+                // Find a default admin or principal to receive the reply
+                var fallbackAdmin = await _userManager.GetUsersInRoleAsync("Admin");
+                var recipient = fallbackAdmin.FirstOrDefault() ?? await _context.Users.FirstOrDefaultAsync();
+                if (recipient != null)
+                {
+                    message.ReceiverId = recipient.Id;
+                }
+            }
+
             message.SenderId = userId!;
             message.CreatedAt = DateTime.UtcNow;
             message.IsRead = false;

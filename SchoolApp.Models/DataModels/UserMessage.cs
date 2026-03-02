@@ -9,8 +9,7 @@ namespace SchoolApp.Models.DataModels
     {
         [Key]
         public int Id { get; set; }
-
-        [Required]
+ 
         public string SenderId { get; set; } = string.Empty;
 
         [Required]
