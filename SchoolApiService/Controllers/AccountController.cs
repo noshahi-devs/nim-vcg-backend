@@ -179,6 +179,7 @@ namespace SchoolApiService.Controllers
 
             return Ok(new AuthResponse
             {
+                Id = userInDb.Id,
                 Username = userInDb.UserName,
                 Email = userInDb.Email,
                 FullName = fullName,

@@ -3,15 +3,78 @@ using SchoolApiService.Services;
 using SchoolApp.Models.Email;
 using SchoolApp.DAL.SchoolContext;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using SchoolApp.Models.DataModels.SecurityModels;
+using SchoolApp.Models.DataModels;
 
 namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NotificationsController(IEmailService emailService, SchoolDbContext context) : ControllerBase
+    [Authorize]
+    public class NotificationsController : ControllerBase
     {
-        private readonly IEmailService _emailService = emailService;
-        private readonly SchoolDbContext _context = context;
+        private readonly IEmailService _emailService;
+        private readonly SchoolDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public NotificationsController(IEmailService emailService, SchoolDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _emailService = emailService;
+            _context = context;
+            _userManager = userManager;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(50)
+                .ToListAsync();
+
+            return Ok(notifications);
+        }
+
+        [HttpPatch("{id}/read")]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+            if (notification == null) return NotFound();
+
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("broadcast")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BroadcastNotification([FromBody] Notification broadcast)
+        {
+            var allUserIds = await _context.Users.Select(u => u.Id).ToListAsync();
+            var notifications = allUserIds.Select(uid => new Notification
+            {
+                UserId = uid,
+                Title = broadcast.Title,
+                Message = broadcast.Message,
+                Link = broadcast.Link,
+                NotificationType = "Broadcast",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            }).ToList();
+
+            _context.Notifications.AddRange(notifications);
+            await _context.SaveChangesAsync();
+            return Ok(new { Count = notifications.Count });
+        }
 
         [HttpGet("logs")]
         public async Task<IActionResult> GetNotificationLogs()
