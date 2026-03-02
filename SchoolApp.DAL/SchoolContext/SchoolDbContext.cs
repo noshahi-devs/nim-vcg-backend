@@ -132,6 +132,18 @@ namespace SchoolApp.DAL.SchoolContext
             modelBuilder.Entity<StudentMarksDetails>()
         .HasKey(c => new { c.StudentId, c.MarkEntryId });
 
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.AcademicYear)
+                .WithMany()
+                .HasForeignKey(s => s.AcademicYearId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ExamSchedule>()
+                .HasOne(e => e.AcademicYear)
+                .WithMany()
+                .HasForeignKey(e => e.AcademicYearId)
+                .OnDelete(DeleteBehavior.NoAction);
+
 
             #region Index
             modelBuilder.Entity<Subject>()

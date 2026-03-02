@@ -99,6 +99,11 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("SectionId")]
         public Section? SectionObject { get; set; }
 
+        public int? AcademicYearId { get; set; }
+
+        [ForeignKey("AcademicYearId")]
+        public AcademicYear? AcademicYear { get; set; }
+
         //// Constructor to initialize UniqueAttendanceId
         //public Student()
         //{
