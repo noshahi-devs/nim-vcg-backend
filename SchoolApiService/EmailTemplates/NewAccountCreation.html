@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to {{InstituteName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header img {
+            max-height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-top: 0;
+        }
+
+        .credentials-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .credentials-box h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1e293b;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .credential-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .credential-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .credential-label {
+            font-weight: 600;
+            color: #64748b;
+            width: 100px;
+        }
+
+        .credential-value {
+            font-weight: 500;
+            color: #0f172a;
+            font-family: monospace;
+            font-size: 16px;
+            background: #e0e7ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #4f46e5;
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .footer {
+            background: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{InstituteLogo}}" alt="{{InstituteName}} Logo">
+            <h1>Welcome to {{InstituteName}}</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{{UserName}}</strong>,</p>
+            <p>Your account has been successfully created as a <strong>{{Role}}</strong> at {{InstituteName}}. We are
+                thrilled to have you on board!</p>
+
+            <div class="credentials-box">
+                <h3>Your Login Credentials</h3>
+                <div class="credential-row">
+                    <div class="credential-label">Portal:</div>
+                    <div class="credential-value" style="background:transparent; padding:0;"><a
+                            href="{{InstituteWebsite}}">Login Here</a></div>
+                </div>
+                <div class="credential-row">
+                    <div class="credential-label">Email:</div>
+                    <div class="credential-value">{{Email}}</div>
+                </div>
+                <div class="credential-row">
+                    <div class="credential-label">Password:</div>
+                    <div class="credential-value">{{Password}}</div>
+                </div>
+            </div>
+
+            <p style="font-size: 14px; color: #ef4444;"><em>Note: For security reasons, we highly recommend changing
+                    your password upon your first login.</em></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 {{InstituteName}}. All rights reserved.</p>
+            <p>{{InstituteAddress}} | {{InstitutePhone}} | <a href="mailto:{{InstituteEmail}}">{{InstituteEmail}}</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

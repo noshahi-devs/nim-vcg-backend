@@ -325,6 +325,33 @@ namespace SchoolApiService.Controllers
             return Ok(report);
         }
 
+        [HttpGet("Report/StaffDaily")]
+        public async Task<ActionResult> GetDailyStaffReport([FromQuery] DateTime date)
+        {
+            var staffList = await _context.dbsStaff.ToListAsync();
+
+            if (!staffList.Any()) return Ok(new List<object>());
+
+            var staffIds = staffList.Select(s => s.StaffId).ToList();
+
+            var attendances = await _context.dbsAttendance
+                .Where(a => a.Type == AttendanceType.Staff && 
+                            staffIds.Contains(a.AttendanceIdentificationNumber) &&
+                            a.Date.Date == date.Date)
+                .ToListAsync();
+
+            var report = staffList.Select(s => new {
+                StaffId = s.StaffId,
+                StaffName = s.StaffName,
+                Designation = s.Designation,
+                IsPresent = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StaffId)?.IsPresent ?? false,
+                Status = attendances.Any(a => a.AttendanceIdentificationNumber == s.StaffId) ? 
+                         (attendances.First(a => a.AttendanceIdentificationNumber == s.StaffId).IsPresent ? "Present" : "Absent") : "",
+                Remarks = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StaffId)?.Description ?? ""
+            });
+
+            return Ok(report);
+        }
         private bool AttendanceExists(int id)
         {
             return _context.dbsAttendance.Any(e => e.AttendanceId == id);

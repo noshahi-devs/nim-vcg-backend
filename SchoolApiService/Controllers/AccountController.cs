@@ -73,6 +73,7 @@ namespace SchoolApiService.Controllers
                     {
                         { "UserName", user.UserName ?? "User" },
                         { "Email", user.Email ?? "" },
+                        { "Password", request.Password },
                         { "Role", string.Join(", ", request.Role) },
                         { "CreatedAt", DateTime.Now.ToString("f") }
                     };
