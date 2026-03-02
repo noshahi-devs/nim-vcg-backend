@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApiService.Services;
 using SchoolApp.DAL.SchoolContext;
+using SchoolApp.Models.DataModels;
 using SchoolApp.Models.DataModels.SecurityModels;
 using SchoolApp.Models.Email;
 
@@ -173,10 +174,14 @@ namespace SchoolApiService.Controllers
                  Console.WriteLine($"Failed to send login email: {ex.Message}");
             }
 
+            var staff = _context.Set<Staff>().FirstOrDefault(s => s.Email == request.Email);
+            string fullName = staff?.StaffName ?? userInDb.UserName;
+
             return Ok(new AuthResponse
             {
                 Username = userInDb.UserName,
                 Email = userInDb.Email,
+                FullName = fullName,
                 Token = accessToken,
                 Roles = userInDb.Role.ToArray()
             });
