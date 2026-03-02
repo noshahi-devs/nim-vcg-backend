@@ -13,6 +13,11 @@ namespace SchoolApp.Models.DataModels
         public int AcademicYearId { get; set; }
         public required string Name { get; set; }
 
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
+
 
     }
 }

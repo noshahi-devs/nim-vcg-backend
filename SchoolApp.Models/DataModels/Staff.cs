@@ -46,8 +46,14 @@ namespace SchoolApp.Models.DataModels
         public string? Status { get; set; }
         public int? DepartmentId { get; set; }      
         public  Department? Department { get; set; }
-        public int? StaffSalaryId { get; set; }      
+        public int? StaffSalaryId { get; set; }
+        [ForeignKey("StaffSalaryId")]
         public StaffSalary? StaffSalary { get; set; }
+
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
         public IList<StaffExperience>? StaffExperiences { get; set; } = [];
     }
 

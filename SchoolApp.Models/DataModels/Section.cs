@@ -24,6 +24,11 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("StaffId")]
         public virtual Staff? ClassTeacher { get; set; }
 
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
+
         public string RoomNo { get; set; } = string.Empty;
 
         public int Capacity { get; set; }

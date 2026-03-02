@@ -60,7 +60,7 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<UserMessage> UserMessages { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<SubjectAssignment> SubjectAssignments { get; set; }
-
+        public DbSet<Campus> Campuses { get; set; }
 
         #endregion
 
@@ -90,6 +90,25 @@ namespace SchoolApp.DAL.SchoolContext
 
 
             // Configure the foreign key constraint for dbsMark referencing dbsSubject
+
+            modelBuilder.Entity<AcademicYear>()
+                .HasOne(a => a.Campus)
+                .WithMany()
+                .HasForeignKey(a => a.CampusId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<MonthlyPayment>()
+                .HasOne(m => m.Campus)
+                .WithMany()
+                .HasForeignKey(m => m.CampusId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<OthersPayment>()
+                .HasOne(o => o.Campus)
+                .WithMany()
+                .HasForeignKey(o => o.CampusId)
+                .OnDelete(DeleteBehavior.NoAction);
+            // Specify ON DELETE NO ACTION
 
             modelBuilder.Entity<Mark>()
                 .HasOne(m => m.Subject)
@@ -144,6 +163,22 @@ namespace SchoolApp.DAL.SchoolContext
                 .HasForeignKey(e => e.AcademicYearId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            // Campus Relationships
+            var campusEntities = new[] { 
+                typeof(Student), typeof(Staff), typeof(Standard), typeof(Department), 
+                typeof(Section), typeof(ExamSchedule), typeof(BankAccount), 
+                typeof(GeneralIncome), typeof(GeneralExpense), typeof(AcademicYear) 
+            };
+
+            foreach (var entityType in campusEntities)
+            {
+                modelBuilder.Entity(entityType)
+                    .HasOne("Campus")
+                    .WithMany()
+                    .HasForeignKey("CampusId")
+                    .OnDelete(DeleteBehavior.NoAction);
+            }
+
 
             #region Index
             modelBuilder.Entity<Subject>()
@@ -171,6 +206,12 @@ namespace SchoolApp.DAL.SchoolContext
             #region Seed Data
 
 
+            #region Campus
+            modelBuilder.Entity<Campus>().HasData(
+                new Campus { CampusId = 1, CampusName = "Main Campus", CampusCode = "MAIN", IsActive = true }
+            );
+            #endregion
+
             #region AcademicMonth
             modelBuilder.Entity<AcademicMonth>().HasData(
                new AcademicMonth { MonthId = 1, MonthName = "January" },
@@ -189,7 +230,7 @@ namespace SchoolApp.DAL.SchoolContext
             for (int year = 2000; year <= 2050; year++)
             {
                 modelBuilder.Entity<AcademicYear>().HasData(
-                    new AcademicYear { AcademicYearId = year - 2000 + 1, Name = year.ToString() }
+                    new AcademicYear { AcademicYearId = year - 2000 + 1, Name = year.ToString(), CampusId = 1 }
                 );
             }
             #endregion
@@ -271,14 +312,14 @@ namespace SchoolApp.DAL.SchoolContext
             #region Department
             // Seed Department data
             modelBuilder.Entity<Department>().HasData(
-    new Department { DepartmentId = 1, DepartmentName = "Teacher" },
-    new Department { DepartmentId = 2, DepartmentName = "Account" },
-    new Department { DepartmentId = 3, DepartmentName = "Administration" },
-    new Department { DepartmentId = 4, DepartmentName = "Student Affairs" },
-    new Department { DepartmentId = 5, DepartmentName = "Counseling" },
-    new Department { DepartmentId = 6, DepartmentName = "Sports" },
-    new Department { DepartmentId = 7, DepartmentName = "Library" },
-    new Department { DepartmentId = 8, DepartmentName = "Maintenance" }
+    new Department { DepartmentId = 1, DepartmentName = "Teacher", CampusId = 1 },
+    new Department { DepartmentId = 2, DepartmentName = "Account", CampusId = 1 },
+    new Department { DepartmentId = 3, DepartmentName = "Administration", CampusId = 1 },
+    new Department { DepartmentId = 4, DepartmentName = "Student Affairs", CampusId = 1 },
+    new Department { DepartmentId = 5, DepartmentName = "Counseling", CampusId = 1 },
+    new Department { DepartmentId = 6, DepartmentName = "Sports", CampusId = 1 },
+    new Department { DepartmentId = 7, DepartmentName = "Library", CampusId = 1 },
+    new Department { DepartmentId = 8, DepartmentName = "Maintenance", CampusId = 1 }
 );
             #endregion
 

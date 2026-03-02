@@ -104,6 +104,11 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("AcademicYearId")]
         public AcademicYear? AcademicYear { get; set; }
 
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
+
         //// Constructor to initialize UniqueAttendanceId
         //public Student()
         //{

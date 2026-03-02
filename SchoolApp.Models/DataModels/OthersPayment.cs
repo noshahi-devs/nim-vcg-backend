@@ -14,6 +14,10 @@ namespace SchoolApp.Models.DataModels
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int OthersPaymentId { get; set; }
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
         public int? StudentId { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal AmountPaid { get; set; }

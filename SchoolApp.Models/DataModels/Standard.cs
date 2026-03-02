@@ -30,7 +30,13 @@ namespace SchoolApp.Models.DataModels
         public string? Remarks { get; set; }
         [NotMapped]
         public string? Status { get; set; } // Active/Inactive
-        public virtual ICollection<Subject>? Subjects { get; set; }
+        public virtual ICollection<Subject>? Subjects { get; set; } = [];
+        public virtual ICollection<Section>? Sections { get; set; } = [];
+
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
         public virtual ICollection<ExamScheduleStandard>? ExamScheduleStandards { get; set; }
         public virtual ICollection<Student>? Students { get; set; } = [];
         public DateTime CreatedAt { get; set; } = DateTime.Now;

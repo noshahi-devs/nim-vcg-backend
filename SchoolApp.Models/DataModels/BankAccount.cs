@@ -11,6 +11,11 @@ namespace SchoolApp.Models.DataModels
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BankAccountId { get; set; }
 
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
+
         [Required]
         [StringLength(100)]
         public string AccountName { get; set; } = string.Empty; // e.g., "Meezan Bank - Main"

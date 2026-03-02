@@ -12,22 +12,22 @@ namespace SchoolApiService.Controllers
         private readonly SchoolDbContext _context = context;
 
         [HttpGet("profit-loss")]
-        public async Task<IActionResult> GetProfitLoss([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] string? campus = null)
+        public async Task<IActionResult> GetProfitLoss([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] int? campusId = null)
         {
             var generalIncome = await _context.GeneralIncomes
-                .Where(i => i.Date >= startDate && i.Date <= endDate && (string.IsNullOrEmpty(campus) || i.Campus == campus))
+                .Where(i => i.Date >= startDate && i.Date <= endDate && (!campusId.HasValue || i.CampusId == campusId))
                 .SumAsync(i => i.Amount);
 
             var feeIncome = await _context.monthlyPayments
-                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate)
+                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && (!campusId.HasValue || p.CampusId == campusId))
                 .SumAsync(p => p.AmountPaid);
 
             var otherFeeIncome = await _context.othersPayments
-                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate)
+                .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate && (!campusId.HasValue || p.CampusId == campusId))
                 .SumAsync(p => p.AmountPaid);
 
             var totalExpense = await _context.GeneralExpenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (string.IsNullOrEmpty(campus) || e.Campus == campus))
+                .Where(e => e.Date >= startDate && e.Date <= endDate && (!campusId.HasValue || e.CampusId == campusId))
                 .SumAsync(e => e.Amount);
 
             var totalIncome = generalIncome + feeIncome + otherFeeIncome;
@@ -40,7 +40,7 @@ namespace SchoolApiService.Controllers
             };
 
             var expenseByCategory = await _context.GeneralExpenses
-                .Where(e => e.Date >= startDate && e.Date <= endDate && (string.IsNullOrEmpty(campus) || e.Campus == campus))
+                .Where(e => e.Date >= startDate && e.Date <= endDate && (!campusId.HasValue || e.CampusId == campusId))
                 .GroupBy(e => e.ExpenseType)
                 .Select(g => new { Category = g.Key, Amount = g.Sum(e => e.Amount) })
                 .ToListAsync();

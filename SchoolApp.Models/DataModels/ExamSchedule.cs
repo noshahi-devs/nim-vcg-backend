@@ -23,6 +23,11 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("AcademicYearId")]
         public AcademicYear? AcademicYear { get; set; }
 
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
+
         public virtual ICollection<ExamScheduleStandard>? ExamScheduleStandards { get; set; } = [];
     }
 }

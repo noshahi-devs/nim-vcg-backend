@@ -14,6 +14,12 @@ namespace SchoolApp.Models.DataModels
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int DepartmentId { get; set; }
+        public virtual ICollection<Staff>? Staffs { get; set; }
+
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
         public required string DepartmentName { get; set; }
 
     }

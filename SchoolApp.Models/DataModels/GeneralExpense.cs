@@ -10,6 +10,11 @@ namespace SchoolApp.Models.DataModels
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
+        public int? CampusId { get; set; }
+
+        [ForeignKey("CampusId")]
+        public Campus? Campus { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;
         public string ExpenseType { get; set; } = "Other"; // e.g., Bill, Purchase
         public string Description { get; set; } = string.Empty;
@@ -17,7 +22,6 @@ namespace SchoolApp.Models.DataModels
         public string PaymentMethod { get; set; } = "Cash";
         public string PaidTo { get; set; } = string.Empty;
         public string ApprovedBy { get; set; } = string.Empty;
-        public string Campus { get; set; } = "Main Campus";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }
