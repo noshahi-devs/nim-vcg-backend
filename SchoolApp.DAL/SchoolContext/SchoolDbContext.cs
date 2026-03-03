@@ -61,6 +61,7 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<SubjectAssignment> SubjectAssignments { get; set; }
         public DbSet<Campus> Campuses { get; set; }
+        public DbSet<Parent> Parents { get; set; }
 
         #endregion
 
@@ -102,6 +103,20 @@ namespace SchoolApp.DAL.SchoolContext
                 .WithMany()
                 .HasForeignKey(m => m.CampusId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // TODO: Uncomment when Parent-Student DB migration is applied
+            //modelBuilder.Entity<Parent>()
+            //    .HasMany(p => p.Children)
+            //    .WithOne(s => s.Parent)
+            //    .HasForeignKey(s => s.ParentId)
+            //    .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Parent>()
+                .HasOne(p => p.Campus)
+                .WithMany()
+                .HasForeignKey(p => p.CampusId)
+                .OnDelete(DeleteBehavior.NoAction);
+
 
             modelBuilder.Entity<OthersPayment>()
                 .HasOne(o => o.Campus)

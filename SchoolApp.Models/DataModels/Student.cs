@@ -111,8 +111,10 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("CampusId")]
         public Campus? Campus { get; set; }
 
+        [NotMapped]
         public int? ParentId { get; set; }
 
+        [NotMapped]
         [ForeignKey("ParentId")]
         public Parent? Parent { get; set; }
 
