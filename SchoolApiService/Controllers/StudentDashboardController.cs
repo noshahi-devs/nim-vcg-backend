@@ -74,7 +74,8 @@ namespace SchoolApiService.Controllers
                     Score = m.ObtainedScore,
                     Total = m.TotalMarks,
                     Grade = m.Grade.ToString(),
-                    Status = m.PassStatus.ToString()
+                    Status = m.PassStatus.ToString(),
+                    Date = m.MarkEntryDate
                 }),
                 NextExam = nextExam != null ? new {
                     Subject = nextExam.Subject?.SubjectName,
