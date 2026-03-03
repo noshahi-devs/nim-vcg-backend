@@ -9,6 +9,7 @@ namespace SchoolApp.Models.DataModels.SecurityModels
 {
     public class ApplicationUser : IdentityUser
     {
+        public string? Name { get; set; }
         public IList<string> Role { get; set; } = [];
     }
 

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
+using Microsoft.AspNetCore.Identity;
+using SchoolApp.Models.DataModels.SecurityModels;
 
 namespace SchoolApiService.Controllers
 {
@@ -17,10 +19,14 @@ namespace SchoolApiService.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly SchoolDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public StudentsController(SchoolDbContext context)
+        public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         // GET: api/Students
@@ -158,6 +164,41 @@ namespace SchoolApiService.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+
+                // Create User Account if Email is provided
+                if (!string.IsNullOrEmpty(student.StudentEmail))
+                {
+                    var existingUser = await _userManager.FindByEmailAsync(student.StudentEmail);
+                    if (existingUser == null)
+                    {
+                        var user = new ApplicationUser { UserName = student.StudentEmail, Email = student.StudentEmail, Name = student.StudentName };
+                        var userResult = await _userManager.CreateAsync(user, "Student@123");
+                        if (userResult.Succeeded)
+                        {
+                            // Ensure Student role exists
+                            if (!await _roleManager.RoleExistsAsync("Student"))
+                            {
+                                await _roleManager.CreateAsync(new IdentityRole("Student"));
+                            }
+                            await _userManager.AddToRoleAsync(user, "Student");
+                            
+                            // Link UserId to Student
+                            student.UserId = user.Id;
+                            _context.Entry(student).State = EntityState.Modified;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                    else
+                    {
+                        // Link existing user if not already linked
+                        if (string.IsNullOrEmpty(student.UserId))
+                        {
+                            student.UserId = existingUser.Id;
+                            _context.Entry(student).State = EntityState.Modified;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
             }
             catch (DbUpdateException ex)
             {

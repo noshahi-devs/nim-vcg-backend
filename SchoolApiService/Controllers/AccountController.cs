@@ -175,7 +175,10 @@ namespace SchoolApiService.Controllers
             }
 
             var staff = _context.Set<Staff>().FirstOrDefault(s => s.Email == request.Email);
-            string fullName = staff?.StaffName ?? userInDb.UserName;
+            var student = _context.dbsStudent.FirstOrDefault(s => s.StudentEmail == request.Email);
+            
+            string fullName = staff?.StaffName ?? student?.StudentName ?? userInDb.UserName;
+            int? studentId = student?.StudentId;
 
             return Ok(new AuthResponse
             {
@@ -184,7 +187,8 @@ namespace SchoolApiService.Controllers
                 Email = userInDb.Email,
                 FullName = fullName,
                 Token = accessToken,
-                Roles = userInDb.Role.ToArray()
+                Roles = userInDb.Role.ToArray(),
+                StudentId = studentId
             });
         }
 

@@ -10,6 +10,8 @@ using SchoolApp.Models.DataModels.StaticModel;
 
 
 
+using SchoolApp.Models.DataModels.SecurityModels;
+
 namespace SchoolApp.Models.DataModels
 {
     [Table("Student")]
@@ -108,6 +110,16 @@ namespace SchoolApp.Models.DataModels
 
         [ForeignKey("CampusId")]
         public Campus? Campus { get; set; }
+
+        public int? ParentId { get; set; }
+
+        [ForeignKey("ParentId")]
+        public Parent? Parent { get; set; }
+
+        public string? UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public ApplicationUser? User { get; set; }
 
         //// Constructor to initialize UniqueAttendanceId
         //public Student()
