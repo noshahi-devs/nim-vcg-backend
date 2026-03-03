@@ -22,6 +22,9 @@ namespace SchoolApiService.Controllers
             public string Message { get; set; } = string.Empty;
             public string? Link { get; set; }
             public string? NotificationType { get; set; }
+            public List<string>? TargetRoles { get; set; }
+            public List<int>? TargetSectionIds { get; set; }
+            public List<int>? TargetSubjectIds { get; set; }
         }
 
         private readonly IEmailService _emailService;
@@ -69,16 +72,111 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpPost("broadcast")]
-        [Authorize(Roles = "Admin,Principal")]
+        [Authorize(Roles = "Admin,Principal,Teacher")]
         public async Task<IActionResult> BroadcastNotification([FromBody] BroadcastRequest broadcast)
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
-            var allUserIds = await _context.Users.Select(u => u.Id).ToListAsync();
+            var senderRoles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+            
+            // Diagnostic logging
+            Console.WriteLine($"Broadcast attempt by: {User.Identity?.Name}");
+            Console.WriteLine($"Roles found in token: {string.Join(", ", senderRoles)}");
+            
+            var isTeacher = senderRoles.Contains("Teacher") && !senderRoles.Contains("Admin") && !senderRoles.Contains("Principal");
+            var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+            var query = _context.Users.AsQueryable();
+
+            if (isTeacher)
+            {
+                if (string.IsNullOrEmpty(email)) return Unauthorized();
+                var staff = await _context.dbsStaff.FirstOrDefaultAsync(s => s.Email == email);
+                if (staff == null) return Unauthorized("Staff record not found.");
+
+                // Teachers can only broadcast to Students in their assigned sections
+                var assignedSectionIds = await _context.SubjectAssignments
+                    .Where(sa => sa.StaffId == staff.StaffId)
+                    .Select(sa => sa.SectionId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var targetSections = broadcast.TargetSectionIds != null && broadcast.TargetSectionIds.Any() 
+                    ? broadcast.TargetSectionIds.Intersect(assignedSectionIds).ToList() 
+                    : assignedSectionIds;
+
+                if (broadcast.TargetSubjectIds != null && broadcast.TargetSubjectIds.Any())
+                {
+                    // Find sections that have these subjects taught by the teacher
+                    var relevantSectionIds = await _context.SubjectAssignments
+                        .Where(sa => sa.StaffId == staff.StaffId && broadcast.TargetSubjectIds.Contains(sa.SubjectId))
+                        .Select(sa => sa.SectionId)
+                        .Distinct()
+                        .ToListAsync();
+                    
+                    targetSections = targetSections.Intersect(relevantSectionIds).ToList();
+                }
+
+                var studentUserIds = await _context.dbsStudent
+                    .Where(s => s.SectionId.HasValue && targetSections.Contains(s.SectionId.Value))
+                    .Select(s => s.UserId)
+                    .Where(uid => uid != null)
+                    .Distinct()
+                    .ToListAsync();
+
+                query = query.Where(u => studentUserIds.Contains(u.Id));
+            }
+            else
+            {
+                // Admin/Principal logic
+                List<string> filteredUserIds = new List<string>();
+
+                if (broadcast.TargetSectionIds != null && broadcast.TargetSectionIds.Any())
+                {
+                    var studentUserIds = await _context.dbsStudent
+                        .Where(s => s.SectionId.HasValue && broadcast.TargetSectionIds.Contains(s.SectionId.Value))
+                        .Select(s => s.UserId)
+                        .Where(uid => uid != null)
+                        .Distinct()
+                        .ToListAsync();
+                    filteredUserIds.AddRange(studentUserIds!);
+                }
+
+                if (broadcast.TargetSubjectIds != null && broadcast.TargetSubjectIds.Any())
+                {
+                    var studentUserIds = await _context.dbsStudent
+                        .Join(_context.SubjectAssignments, 
+                             s => s.SectionId, 
+                             sa => sa.SectionId, 
+                             (s, sa) => new { s, sa })
+                        .Where(x => x.s.SectionId.HasValue && broadcast.TargetSubjectIds.Contains(x.sa.SubjectId))
+                        .Select(x => x.s.UserId)
+                        .Where(uid => uid != null)
+                        .Distinct()
+                        .ToListAsync();
+                     filteredUserIds.AddRange(studentUserIds!);
+                }
+
+                if (filteredUserIds.Any())
+                {
+                    query = query.Where(u => filteredUserIds.Contains(u.Id));
+                }
+
+                if (broadcast.TargetRoles != null && broadcast.TargetRoles.Any())
+                {
+                    List<string> roleUserIds = new List<string>();
+                    foreach (var role in broadcast.TargetRoles)
+                    {
+                        var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+                        roleUserIds.AddRange(usersInRole.Select(u => u.Id));
+                    }
+                    var uniqueIdsByRole = roleUserIds.Distinct().ToList();
+                    query = query.Where(u => uniqueIdsByRole.Contains(u.Id));
+                }
+            }
+
+            var targetUserIds = await query.Select(u => u.Id).ToListAsync();
             var now = DateTime.UtcNow;
 
-            var notifications = allUserIds.Select(uid => new Notification
+            var notifications = targetUserIds.Select(uid => new Notification
             {
                 UserId = uid,
                 Title = broadcast.Title,
@@ -93,10 +191,14 @@ namespace SchoolApiService.Controllers
 
             // Also add to UserMessages so it appears in the sender's "Sent" folder
             // and potentially in recipients' inbox if we bridge them
+            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
+                                   .Select(c => c.Value)
+                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
+
             var broadcastMessage = new UserMessage
             {
                 SenderId = userId ?? "System",
-                ReceiverId = "All Users", // Placeholder for broadcast
+                ReceiverId = isTeacher ? (broadcast.TargetSectionIds != null && broadcast.TargetSectionIds.Any() ? $"Sections: {string.Join(", ", broadcast.TargetSectionIds)}" : "All Assigned Students") : (broadcast.TargetRoles != null && broadcast.TargetRoles.Any() ? string.Join(", ", broadcast.TargetRoles) : "All Users"), // Placeholder for broadcast
                 Subject = broadcast.Title,
                 Content = broadcast.Message,
                 CreatedAt = now,
@@ -111,8 +213,38 @@ namespace SchoolApiService.Controllers
             return Ok(new { Count = notifications.Count });
         }
 
+        [HttpGet("my-sections")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetMySections()
+        {
+            var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email)) return Unauthorized();
+
+            var staff = await _context.dbsStaff.FirstOrDefaultAsync(s => s.Email == email);
+            if (staff == null) return NotFound("Staff record not found.");
+
+            var sections = await _context.SubjectAssignments
+                .Where(sa => sa.StaffId == staff.StaffId)
+                .Include(sa => sa.Section)
+                    .ThenInclude(sec => sec.Campus)
+                .Include(sa => sa.Subject)
+                .Select(sa => new
+                {
+                    sa.Section.SectionId,
+                    sa.Section.SectionName,
+                    sa.Section.ClassName,
+                    CampusName = sa.Section.Campus != null ? sa.Section.Campus.CampusName : "",
+                    sa.SubjectId,
+                    SubjectName = sa.Subject != null ? sa.Subject.SubjectName : ""
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return Ok(sections);
+        }
+
         [HttpGet("logs")]
-        [Authorize(Roles = "Admin,Principal")]
+        [Authorize(Roles = "Admin,Principal,Teacher")]
         public async Task<IActionResult> GetNotificationLogs()
         {
             try

@@ -138,6 +138,9 @@ namespace SchoolApiService.Controllers
                 return Unauthorized(request);
             }
 
+            var roles = await _userManager.GetRolesAsync(userInDb);
+            userInDb.Role = roles;
+
             var accessToken = _tokenService.CreateToken(userInDb);
             await _context.SaveChangesAsync();
 
