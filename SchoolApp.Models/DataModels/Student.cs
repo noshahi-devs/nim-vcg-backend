@@ -58,6 +58,15 @@ namespace SchoolApp.Models.DataModels
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string? StudentEmail { get; set; }
 
+        [NotMapped]
+        public string? StudentPassword { get; set; }
+
+        [EmailAddress(ErrorMessage = "Invalid parent email address")]
+        public string? ParentEmail { get; set; }
+
+        [NotMapped]
+        public string? ParentPassword { get; set; }
+
         public string? PermanentAddress { get; set; }
 
         public string? TemporaryAddress { get; set; }
@@ -111,10 +120,8 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("CampusId")]
         public Campus? Campus { get; set; }
 
-        [NotMapped]
         public int? ParentId { get; set; }
-
-        [NotMapped]
+ 
         [ForeignKey("ParentId")]
         public Parent? Parent { get; set; }
 

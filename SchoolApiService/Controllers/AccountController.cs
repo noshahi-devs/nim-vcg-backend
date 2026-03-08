@@ -117,21 +117,28 @@ namespace SchoolApiService.Controllers
                 return BadRequest(ModelState);
             }
 
-            var managedUser = await _userManager.FindByEmailAsync(request.Email!);
+            var emailInput = request.Email?.Trim();
+            var managedUser = await _userManager.FindByEmailAsync(emailInput!);
 
             if (managedUser == null)
             {
-                return BadRequest("Bad credentials");
+                // Fallback to checking by username in case the user typed their username instead of email
+                managedUser = await _userManager.FindByNameAsync(emailInput!);
+            }
+
+            if (managedUser == null)
+            {
+                return BadRequest(new { message = "User account not found. Please ensure you have registered correctly." });
             }
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(managedUser, request.Password!);
 
             if (!isPasswordValid)
             {
-                return BadRequest("Bad credentials");
+                return BadRequest(new { message = "Invalid password. Please try again." });
             }
 
-            var userInDb = _context.Users.FirstOrDefault(u => u.Email == request.Email);
+            var userInDb = await _context.Users.FindAsync(managedUser.Id);
 
             if (userInDb is null)
             {
@@ -370,6 +377,14 @@ namespace SchoolApiService.Controllers
             if (result.Succeeded) return Ok();
             
             return BadRequest(result.Errors);
+        }
+
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmail([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return BadRequest("Email is required");
+            var user = await _userManager.FindByEmailAsync(email);
+            return Ok(new { exists = user != null });
         }
     }
 }

@@ -168,37 +168,52 @@ namespace SchoolApiService.Controllers
                 // Create User Account if Email is provided
                 if (!string.IsNullOrEmpty(student.StudentEmail))
                 {
-                    var existingUser = await _userManager.FindByEmailAsync(student.StudentEmail);
-                    if (existingUser == null)
+                    var studentUserResult = await CreateUserIfNotExist(student.StudentEmail, student.StudentName, "Student", student.StudentPassword);
+                    if (!studentUserResult.Succeeded)
                     {
-                        var user = new ApplicationUser { UserName = student.StudentEmail, Email = student.StudentEmail, Name = student.StudentName };
-                        var userResult = await _userManager.CreateAsync(user, "Student@123");
-                        if (userResult.Succeeded)
-                        {
-                            // Ensure Student role exists
-                            if (!await _roleManager.RoleExistsAsync("Student"))
-                            {
-                                await _roleManager.CreateAsync(new IdentityRole("Student"));
-                            }
-                            await _userManager.AddToRoleAsync(user, "Student");
-                            
-                            // Link UserId to Student
-                            student.UserId = user.Id;
-                            _context.Entry(student).State = EntityState.Modified;
-                            await _context.SaveChangesAsync();
-                        }
+                        return BadRequest($"Failed to create student user account: {studentUserResult.ErrorMessage}");
                     }
-                    else
+                    student.UserId = studentUserResult.User?.Id;
+                }
+
+                // Create Parent record and User Account if ParentEmail is provided
+                /*
+                if (!string.IsNullOrEmpty(student.ParentEmail))
+                {
+                    var parent = await _context.Parents.FirstOrDefaultAsync(p => p.Email == student.ParentEmail);
+                    if (parent == null)
                     {
-                        // Link existing user if not already linked
-                        if (string.IsNullOrEmpty(student.UserId))
+                        parent = new Parent
                         {
-                            student.UserId = existingUser.Id;
-                            _context.Entry(student).State = EntityState.Modified;
-                            await _context.SaveChangesAsync();
-                        }
+                            ParentName = student.FatherName ?? student.MotherName ?? "Parent of " + student.StudentName,
+                            Email = student.ParentEmail,
+                            Phone = student.FatherContactNumber ?? student.MotherContactNumber,
+                            CampusId = student.CampusId
+                        };
+                        _context.Parents.Add(parent);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    student.ParentId = parent.ParentId;
+
+                    // Create User Account for Parent
+                    var parentUserResult = await CreateUserIfNotExist(student.ParentEmail, parent.ParentName, "Parent", student.ParentPassword);
+                    if (parentUserResult.Succeeded && string.IsNullOrEmpty(parent.UserId))
+                    {
+                        parent.UserId = parentUserResult.User?.Id;
+                        _context.Entry(parent).State = EntityState.Modified;
+                        await _context.SaveChangesAsync();
+                    }
+                    else if (!parentUserResult.Succeeded)
+                    {
+                         // We might want to warn or fail here. For now, let's at least log it.
+                         Console.WriteLine($"Warning: Failed to create parent user account: {parentUserResult.ErrorMessage}");
                     }
                 }
+                */
+
+                _context.Entry(student).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateException ex)
             {
@@ -206,6 +221,31 @@ namespace SchoolApiService.Controllers
             }
 
             return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
+        }
+
+        private async Task<(ApplicationUser? User, bool Succeeded, string? ErrorMessage)> CreateUserIfNotExist(string email, string name, string role, string? providedPassword = null)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new ApplicationUser { UserName = email, Email = email, Name = name };
+                string password = string.IsNullOrWhiteSpace(providedPassword) 
+                    ? (role == "Parent" ? "Parent@123" : "Student@123") 
+                    : providedPassword;
+                var result = await _userManager.CreateAsync(user, password);
+                if (result.Succeeded)
+                {
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                    await _userManager.AddToRoleAsync(user, role);
+                    return (user, true, null);
+                }
+                var error = string.Join(", ", result.Errors.Select(e => e.Description));
+                return (null, false, error);
+            }
+            return (user, true, null);
         }
 
 

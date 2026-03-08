@@ -104,12 +104,11 @@ namespace SchoolApp.DAL.SchoolContext
                 .HasForeignKey(m => m.CampusId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // TODO: Uncomment when Parent-Student DB migration is applied
-            //modelBuilder.Entity<Parent>()
-            //    .HasMany(p => p.Children)
-            //    .WithOne(s => s.Parent)
-            //    .HasForeignKey(s => s.ParentId)
-            //    .OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Parent>()
+                .HasMany(p => p.Children)
+                .WithOne(s => s.Parent)
+                .HasForeignKey(s => s.ParentId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Parent>()
                 .HasOne(p => p.Campus)
