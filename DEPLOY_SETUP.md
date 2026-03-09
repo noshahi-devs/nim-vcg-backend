@@ -28,7 +28,7 @@ git clone https://github.com/noshahi-devs/nim-vcg-backend.git
 Create service file:
 
 ```bash
-sudo nano /etc/systemd/system/nim-vcg-api.service
+sudo nano /etc/systemd/system/nim-backend.service
 ```
 
 Example content:
@@ -39,13 +39,14 @@ Description=NIM VCG Backend API
 After=network.target
 
 [Service]
-WorkingDirectory=/var/www/apps/nim-vcg-backend
-ExecStart=/usr/bin/dotnet /var/www/apps/nim-vcg-backend/publish/SchoolApiService.dll
+WorkingDirectory=/var/www/visioncollegegojra/backend
+ExecStart=/usr/bin/dotnet /var/www/visioncollegegojra/backend/SchoolApiService.dll
 Restart=always
 RestartSec=5
-SyslogIdentifier=nim-vcg-api
-User=www-data
+SyslogIdentifier=nim-backend
+User=administrator
 Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
 
 [Install]
 WantedBy=multi-user.target
@@ -55,9 +56,11 @@ Enable service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable nim-vcg-api
-sudo systemctl start nim-vcg-api
+sudo systemctl enable nim-backend
+sudo systemctl start nim-backend
 ```
+
+This example assumes nginx proxies `/api/` to `http://127.0.0.1:5000`. `launchSettings.json` is only for local development and is not used by `systemd` when you run the published DLL.
 
 Allow deploy user to restart service without password:
 
@@ -68,7 +71,7 @@ sudo visudo
 Add:
 
 ```text
-deployuser ALL=(ALL) NOPASSWD:/bin/systemctl restart nim-vcg-api,/bin/systemctl is-active nim-vcg-api
+deployuser ALL=(ALL) NOPASSWD:/bin/systemctl restart nim-backend,/bin/systemctl is-active nim-backend
 ```
 
 ## 3) GitHub repository secrets (backend repo)
@@ -82,8 +85,8 @@ Add:
 - `VPS_USER` = VPS SSH username (recommended: non-root deploy user)
 - `VPS_SSH_PRIVATE_KEY` = private key content of deploy user
 - `BACKEND_APP_PATH` = VPS clone path (example `/var/www/apps/nim-vcg-backend`)
-- `BACKEND_PUBLISH_PATH` = publish output path (example `/var/www/apps/nim-vcg-backend/publish`)
-- `BACKEND_SERVICE_NAME` = systemd service name (example `nim-vcg-api`)
+- `BACKEND_PUBLISH_PATH` = publish output path (example `/var/www/visioncollegegojra/backend`)
+- `BACKEND_SERVICE_NAME` = systemd service name (example `nim-backend`)
 - `DEPLOY_BRANCH` = `main`
 
 ## 4) Deploy flow

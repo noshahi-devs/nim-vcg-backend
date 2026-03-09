@@ -1,5 +1,6 @@
 ﻿using FastReport.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,6 +32,16 @@ namespace SchoolApiService
                                       .AllowAnyHeader()
                                       .AllowAnyMethod();
                                   });
+            });
+
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor |
+                    ForwardedHeaders.XForwardedProto |
+                    ForwardedHeaders.XForwardedHost;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
             });
 
 
@@ -247,6 +258,8 @@ namespace SchoolApiService
                 app.UseSwaggerUI();
                 app.UseStatusCodePages();
             }
+
+            app.UseForwardedHeaders();
 
             // ⭐ CORS MUST BE BEFORE HttpsRedirection and Authentication
             app.UseCors(MyAllowSpecificOrigins);
