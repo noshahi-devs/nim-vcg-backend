@@ -28,6 +28,7 @@ jobs:
             PUBLISH_PATH="${{ secrets.BACKEND_PUBLISH_PATH }}"
             SERVICE_NAME="${{ secrets.BACKEND_SERVICE_NAME }}"
             BRANCH="${{ secrets.DEPLOY_BRANCH }}"
+            SUDO_PASSWORD="${{ secrets.VPS_SUDO_PASSWORD }}"
 
             if [ -z "${BRANCH}" ]; then
               BRANCH="main"
@@ -36,10 +37,13 @@ jobs:
             cd "$APP_PATH"
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
-            git pull --ff-only origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            chmod +x scripts/deploy-live.sh
 
-            dotnet restore
-            dotnet publish SchoolApiService/SchoolApiService.csproj -c Release -o "$PUBLISH_PATH"
-
-            sudo systemctl restart "$SERVICE_NAME"
-            sudo systemctl is-active --quiet "$SERVICE_NAME"
+            BACKEND_REPO="$APP_PATH" \
+            BACKEND_LIVE="$PUBLISH_PATH" \
+            SERVICE_NAME="$SERVICE_NAME" \
+            DEPLOY_BRANCH="$BRANCH" \
+            SKIP_SYNC=1 \
+            SUDO_PASSWORD="$SUDO_PASSWORD" \
+            bash scripts/deploy-live.sh backend
