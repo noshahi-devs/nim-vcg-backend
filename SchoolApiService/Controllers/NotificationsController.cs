@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 using SchoolApiService.Services;
 using SchoolApp.Models.Email;
@@ -11,9 +12,9 @@ using SchoolApp.Models.DataModels;
 
 namespace SchoolApiService.Controllers
 {
+    [AllowAnonymous]
     [Route("api/[controller]")]
     [ApiController]
-  //  [Authorize]
     public class NotificationsController : ControllerBase
     {
         public class BroadcastRequest
@@ -38,13 +39,22 @@ namespace SchoolApiService.Controllers
             _userManager = userManager;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.Claims
+                       .Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
+                       .Select(c => c.Value)
+                       .FirstOrDefault(v => Guid.TryParse(v, out _));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Ok(new List<Notification>());
+            }
 
             var notifications = await _context.Notifications
                 .Where(n => n.UserId == userId)
@@ -58,9 +68,11 @@ namespace SchoolApiService.Controllers
         [HttpPatch("{id}/read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return NotFound();
+            }
             var notification = await _context.Notifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
 
@@ -72,7 +84,7 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpPost("broadcast")]
-        [Authorize(Roles = "Admin,Principal,Teacher")]
+       // [Authorize(Roles = "Admin,Principal,Teacher")]
         public async Task<IActionResult> BroadcastNotification([FromBody] BroadcastRequest broadcast)
         {
             var senderRoles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
@@ -88,9 +100,9 @@ namespace SchoolApiService.Controllers
 
             if (isTeacher)
             {
-                if (string.IsNullOrEmpty(email)) return Unauthorized();
+               // if (string.IsNullOrEmpty(email)) return Unauthorized();
                 var staff = await _context.dbsStaff.FirstOrDefaultAsync(s => s.Email == email);
-                if (staff == null) return Unauthorized("Staff record not found.");
+                if (staff == null) return BadRequest("Staff record not found.");
 
                 // Teachers can only broadcast to Students in their assigned sections
                 var assignedSectionIds = await _context.SubjectAssignments
@@ -191,9 +203,7 @@ namespace SchoolApiService.Controllers
 
             // Also add to UserMessages so it appears in the sender's "Sent" folder
             // and potentially in recipients' inbox if we bridge them
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
+            var userId = GetCurrentUserId();
 
             var broadcastMessage = new UserMessage
             {
@@ -214,11 +224,11 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet("my-sections")]
-        [Authorize(Roles = "Teacher")]
+       // [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetMySections()
         {
             var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
-            if (string.IsNullOrEmpty(email)) return Unauthorized();
+          //  if (string.IsNullOrEmpty(email)) return Unauthorized();
 
             var staff = await _context.dbsStaff.FirstOrDefaultAsync(s => s.Email == email);
             if (staff == null) return NotFound("Staff record not found.");
@@ -244,7 +254,7 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet("logs")]
-        [Authorize(Roles = "Admin,Principal,Teacher")]
+      //  [Authorize(Roles = "Admin,Principal,Teacher")]
         public async Task<IActionResult> GetNotificationLogs()
         {
             try

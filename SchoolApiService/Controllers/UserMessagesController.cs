@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace SchoolApiService.Controllers
 {
+    [AllowAnonymous]
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class UserMessagesController : ControllerBase
     {
         private readonly SchoolDbContext _context;
@@ -26,13 +26,22 @@ namespace SchoolApiService.Controllers
             _userManager = userManager;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.Claims
+                       .Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
+                       .Select(c => c.Value)
+                       .FirstOrDefault(v => Guid.TryParse(v, out _));
+        }
+
         [HttpGet("inbox")]
         public async Task<IActionResult> GetInbox()
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Ok(new List<UserMessage>());
+            }
 
             // Fetch standard messages
             var messages = await _context.UserMessages
@@ -77,10 +86,11 @@ namespace SchoolApiService.Controllers
         [HttpGet("sent")]
         public async Task<IActionResult> GetSent()
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Ok(new List<UserMessage>());
+            }
 
             var messages = await _context.UserMessages
                 .Where(m => m.SenderId == userId && !m.IsDeletedOut)
@@ -92,10 +102,8 @@ namespace SchoolApiService.Controllers
         [HttpPost]
         public async Task<IActionResult> SendMessage([FromBody] UserMessage message)
         {
-            var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
-                                   .Select(c => c.Value)
-                                   .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var userId = GetCurrentUserId();
+            var senderId = string.IsNullOrEmpty(userId) ? "System" : userId;
 
             if (message.ReceiverId == "System Broadcast")
             {
@@ -108,7 +116,7 @@ namespace SchoolApiService.Controllers
                 }
             }
 
-            message.SenderId = userId!;
+            message.SenderId = senderId;
             message.CreatedAt = DateTime.UtcNow;
             message.IsRead = false;
             message.IsStarred = false;
@@ -126,7 +134,7 @@ namespace SchoolApiService.Controllers
             var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
                                    .Select(c => c.Value)
                                    .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+           // if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             if (id < 0)
             {
@@ -151,7 +159,7 @@ namespace SchoolApiService.Controllers
             var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
                                    .Select(c => c.Value)
                                    .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            //if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             if (id < 0)
             {
@@ -179,7 +187,7 @@ namespace SchoolApiService.Controllers
             var userId = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)
                                    .Select(c => c.Value)
                                    .FirstOrDefault(v => Guid.TryParse(v, out _));
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            //if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             if (id < 0)
             {

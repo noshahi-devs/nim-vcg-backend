@@ -20,20 +20,6 @@ namespace SchoolApiService
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy(name: MyAllowSpecificOrigins,
-                                  policy =>
-                                  {
-                                      policy
-                                      .AllowAnyOrigin()
-                                      .AllowAnyHeader()
-                                      .AllowAnyMethod();
-                                  });
-            });
-
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders =
@@ -44,6 +30,16 @@ namespace SchoolApiService
                 options.KnownProxies.Clear();
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
 
             //builder.Services.AddControllers();
 
@@ -262,8 +258,7 @@ namespace SchoolApiService
             app.UseForwardedHeaders();
 
             // ⭐ CORS MUST BE BEFORE HttpsRedirection and Authentication
-            app.UseCors(MyAllowSpecificOrigins);
-
+            app.UseCors("AllowAll");
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
@@ -282,4 +277,3 @@ namespace SchoolApiService
         }
     }
 }
-
