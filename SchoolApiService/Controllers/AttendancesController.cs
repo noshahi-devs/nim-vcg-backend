@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -299,6 +299,7 @@ namespace SchoolApiService.Controllers
                 .OrderBy(a => a.Date)
                 .Select(a => new {
                     Date = a.Date,
+                    IsPresent = a.IsPresent,
                     Status = a.IsPresent ? "Present" : "Absent",
                     Remarks = a.Description
                 })
@@ -317,6 +318,7 @@ namespace SchoolApiService.Controllers
                 .OrderBy(a => a.Date)
                 .Select(a => new {
                     Date = a.Date,
+                    IsPresent = a.IsPresent,
                     Status = a.IsPresent ? "Present" : "Absent",
                     Remarks = a.Description
                 })

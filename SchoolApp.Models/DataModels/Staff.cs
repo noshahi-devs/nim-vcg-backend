@@ -1,4 +1,4 @@
-﻿using SchoolApp.Models.DataModels;
+using SchoolApp.Models.DataModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,6 +30,8 @@ namespace SchoolApp.Models.DataModels
         public DateTime? DOB { get; set; }
         public string? FatherName { get; set; }
         public string? MotherName { get; set; }
+        public string? CNIC { get; set; }
+        public string? Experience { get; set; }
         public string? TemporaryAddress { get; set; }      
         public string? PermanentAddress { get; set; }
         public string? ContactNumber1 { get; set; }

@@ -1,4 +1,4 @@
-﻿using FastReport.Data;
+using FastReport.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -190,7 +190,7 @@ namespace SchoolApiService
         options.UseSecurityTokenValidators = true;
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ClockSkew = TimeSpan.Zero,
+            ClockSkew = TimeSpan.FromMinutes(5),
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,

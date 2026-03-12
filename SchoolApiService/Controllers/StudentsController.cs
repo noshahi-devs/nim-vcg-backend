@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +22,14 @@ namespace SchoolApiService.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
+        public class PromotionRequest
+        {
+            public List<int> StudentIds { get; set; } = [];
+            public int NextClassId { get; set; }
+            public int NextSectionId { get; set; }
+            public int NextAcademicYearId { get; set; }
+        }
+
         public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
@@ -31,9 +39,16 @@ namespace SchoolApiService.Controllers
 
         // GET: api/Students
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudents([FromQuery] int? academicYearId = null)
         {
-            return await _context.dbsStudent
+            var query = _context.dbsStudent.AsQueryable();
+
+            if (academicYearId.HasValue)
+            {
+                query = query.Where(s => s.AcademicYearId == academicYearId.Value);
+            }
+
+            return await query
                 .Include(s => s.Standard)
                 .ToListAsync();
         }
@@ -130,6 +145,12 @@ namespace SchoolApiService.Controllers
                     return BadRequest($"Invalid SectionId: {student.SectionId}");
                 }
                 student.Section = student.SectionObject.SectionName; // keeping fallback copy
+            }
+
+            // Fallback for AcademicYearId
+            if (student.AcademicYearId == null)
+            {
+                student.AcademicYearId = await GetActiveAcademicYearId();
             }
 
             // Check if the ImageUpload is provided
@@ -249,7 +270,47 @@ namespace SchoolApiService.Controllers
         }
 
 
-        // DELETE: api/Students/5
+        [HttpPost("bulk-promote")]
+        public async Task<IActionResult> BulkPromote([FromBody] PromotionRequest request)
+        {
+            if (request == null || request.StudentIds.Count == 0)
+            {
+                return BadRequest("Invalid promotion request.");
+            }
+
+            var nextClass = await _context.dbsStandard.FindAsync(request.NextClassId);
+            var nextSection = await _context.Sections.FindAsync(request.NextSectionId);
+            var nextYear = await _context.dbsAcademicYears.FindAsync(request.NextAcademicYearId);
+
+            if (nextClass == null || nextSection == null || nextYear == null)
+            {
+                return BadRequest("Invalid destination class, section, or academic year.");
+            }
+
+            var students = await _context.dbsStudent
+                .Where(s => request.StudentIds.Contains(s.StudentId))
+                .ToListAsync();
+
+            foreach (var student in students)
+            {
+                student.StandardId = request.NextClassId;
+                student.SectionId = request.NextSectionId;
+                student.Section = nextSection.SectionName;
+                student.AcademicYearId = request.NextAcademicYearId;
+                _context.Entry(student).State = EntityState.Modified;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { Message = $"{students.Count} students promoted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
@@ -268,6 +329,21 @@ namespace SchoolApiService.Controllers
         private bool StudentExists(int id)
         {
             return _context.dbsStudent.Any(e => e.StudentId == id);
+        }
+
+        private async Task<int?> GetActiveAcademicYearId()
+        {
+            var activeYearName = await _context.SystemSettings
+                .Where(s => s.SettingKey == "academicYear" && s.Category == "General")
+                .Select(s => s.SettingValue)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(activeYearName)) return null;
+
+            return await _context.dbsAcademicYears
+                .Where(y => y.Name == activeYearName)
+                .Select(y => y.AcademicYearId)
+                .FirstOrDefaultAsync();
         }
     }
 }

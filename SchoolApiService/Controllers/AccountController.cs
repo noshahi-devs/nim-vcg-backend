@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -308,32 +308,36 @@ namespace SchoolApiService.Controllers
 
         [HttpPost("AssignRole")]
         [Authorize(Roles = "Admin, Operator")]
-        //[Route("AssignRole")]
-        public async Task<IActionResult> AssignRole(AssignRoleDto model)//manager, admin
+        public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (model == null || string.IsNullOrEmpty(model.Id))
+            {
+                return BadRequest("Invalid user data provided.");
+            }
+
             try
             {
-
                 var user = await _userManager.FindByIdAsync(model.Id);
                 if (user is null) return BadRequest($"User not found by id: {model.Id}");
 
-                var userRoles = await _userManager.GetRolesAsync(user);//existing user roles=> user, manager
-
+                var userRoles = await _userManager.GetRolesAsync(user);
                 List<string?> dbRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
 
+                // Ensure model.Role is not null
+                var requestedRoles = model.Role ?? new List<string>();
 
-                foreach (var role in dbRoles)//admin, user, manager, guest, public  => all roles in db
+                foreach (var role in dbRoles)
                 {
-
-                    if (model.Role.Contains(role))
+                    if (requestedRoles.Contains(role))
                     {
                         if (!userRoles.Contains(role))
                         {
-                            await _userManager.AddToRoleAsync(user, role);//
-                        }
-                        else
-                        {
-                            //roles already in user
+                            await _userManager.AddToRoleAsync(user, role);
                         }
                     }
                     else
@@ -343,18 +347,16 @@ namespace SchoolApiService.Controllers
                             await _userManager.RemoveFromRoleAsync(user, role);
                         }
                     }
-
                 }
 
-                user.Role = model.Role;
+                user.Role = requestedRoles;
                 await _userManager.UpdateAsync(user);
 
-                return Ok();
-
+                return Ok(new { message = "Role assigned successfully" });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                return BadRequest(new { message = ex.Message });
             }
         }
 

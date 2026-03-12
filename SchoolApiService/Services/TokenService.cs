@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using SchoolApp.Models.DataModels.SecurityModels;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,10 +11,12 @@ namespace SchoolApiService.Services
     {
         private const int ExpirationDays = 7;
         private readonly ILogger<TokenService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public TokenService(ILogger<TokenService> logger)
+        public TokenService(ILogger<TokenService> logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
         }
 
         public string CreateToken(ApplicationUser user)
@@ -50,8 +52,8 @@ namespace SchoolApiService.Services
             var credentials = CreateSigningCredentials();
 
             return new JwtSecurityToken(
-                new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("JwtTokenSettings")["ValidIssuer"],
-                new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("JwtTokenSettings")["ValidAudience"],
+                _configuration.GetSection("JwtTokenSettings")["ValidIssuer"],
+                _configuration.GetSection("JwtTokenSettings")["ValidAudience"],
                 claims,
                 expires: expiration,
                 signingCredentials: credentials
@@ -60,7 +62,7 @@ namespace SchoolApiService.Services
         //yyyyMMddHHmmss
         private List<Claim> CreateClaims(ApplicationUser user)
         {
-            var jwtSub = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("JwtTokenSettings")["JwtRegisteredClaimNamesSub"];
+            var jwtSub = _configuration.GetSection("JwtTokenSettings")["JwtRegisteredClaimNamesSub"];
 
             try
             {
@@ -92,7 +94,7 @@ namespace SchoolApiService.Services
 
         private SigningCredentials CreateSigningCredentials()
         {
-            var symmetricSecurityKey = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("JwtTokenSettings")["SymmetricSecurityKey"];
+            var symmetricSecurityKey = _configuration.GetSection("JwtTokenSettings")["SymmetricSecurityKey"];
 
             return new SigningCredentials(
                 new SymmetricSecurityKey(
