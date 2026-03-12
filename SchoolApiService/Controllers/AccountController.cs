@@ -205,7 +205,6 @@ namespace SchoolApiService.Controllers
 
         [HttpGet]
         [Route("/GetUsers")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UserIndex()
         {
             return Ok(await _userManager.Users.ToListAsync());
