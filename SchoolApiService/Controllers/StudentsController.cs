@@ -15,7 +15,7 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly SchoolDbContext _context;
@@ -164,26 +164,26 @@ namespace SchoolApiService.Controllers
             int nextAdmissionNo = 1000;
             int nextEnrollmentNo = 2000;
 
-            if (await _context.dbsStudent.AnyAsync())
-            {
-                nextAttendanceNumber = await _context.dbsStudent.MaxAsync(s => s.UniqueStudentAttendanceNumber) + 1;
-                
-                var maxAdmission = await _context.dbsStudent.MaxAsync(s => s.AdmissionNo);
-                nextAdmissionNo = (maxAdmission ?? 999) + 1;
-
-                var maxEnrollment = await _context.dbsStudent.MaxAsync(s => s.EnrollmentNo);
-                nextEnrollmentNo = (maxEnrollment ?? 1999) + 1;
-            }
-            
-            student.UniqueStudentAttendanceNumber = nextAttendanceNumber;
-            student.AdmissionNo = nextAdmissionNo;
-            student.EnrollmentNo = nextEnrollmentNo;
-
-            // Add the student to the context
-            _context.dbsStudent.Add(student);
-
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             try
             {
+                if (await _context.dbsStudent.AnyAsync())
+                {
+                    nextAttendanceNumber = await _context.dbsStudent.MaxAsync(s => s.UniqueStudentAttendanceNumber) + 1;
+                    
+                    var maxAdmission = await _context.dbsStudent.MaxAsync(s => s.AdmissionNo);
+                    nextAdmissionNo = (maxAdmission ?? 999) + 1;
+
+                    var maxEnrollment = await _context.dbsStudent.MaxAsync(s => s.EnrollmentNo);
+                    nextEnrollmentNo = (maxEnrollment ?? 1999) + 1;
+                }
+                
+                student.UniqueStudentAttendanceNumber = nextAttendanceNumber;
+                student.AdmissionNo = nextAdmissionNo;
+                student.EnrollmentNo = nextEnrollmentNo;
+
+                // Add the student to the context
+                _context.dbsStudent.Add(student);
                 await _context.SaveChangesAsync();
 
                 // Create User Account if Email is provided
@@ -192,13 +192,12 @@ namespace SchoolApiService.Controllers
                     var studentUserResult = await CreateUserIfNotExist(student.StudentEmail, student.StudentName, "Student", student.StudentPassword);
                     if (!studentUserResult.Succeeded)
                     {
+                        await transaction.RollbackAsync();
                         return BadRequest($"Failed to create student user account: {studentUserResult.ErrorMessage}");
                     }
                     student.UserId = studentUserResult.User?.Id;
                 }
-
                 // Create Parent record and User Account if ParentEmail is provided
-                /*
                 if (!string.IsNullOrEmpty(student.ParentEmail))
                 {
                     var parent = await _context.Parents.FirstOrDefaultAsync(p => p.Email == student.ParentEmail);
@@ -231,13 +230,14 @@ namespace SchoolApiService.Controllers
                          Console.WriteLine($"Warning: Failed to create parent user account: {parentUserResult.ErrorMessage}");
                     }
                 }
-                */
 
                 _context.Entry(student).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return BadRequest($"Unable to save changes: {ex.InnerException?.Message ?? ex.Message}");
             }
 
@@ -251,7 +251,7 @@ namespace SchoolApiService.Controllers
             {
                 user = new ApplicationUser { UserName = email, Email = email, Name = name };
                 string password = string.IsNullOrWhiteSpace(providedPassword) 
-                    ? (role == "Parent" ? "Parent@123" : "Student@123") 
+                    ? (role == "Parent" ? $"Parent@{Guid.NewGuid().ToString().Substring(0, 6)}!" : $"Student@{Guid.NewGuid().ToString().Substring(0, 6)}!") 
                     : providedPassword;
                 var result = await _userManager.CreateAsync(user, password);
                 if (result.Succeeded)

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,6 +13,8 @@ namespace SchoolApp.Models.DataModels.SecurityModels
         [NotMapped]
         public string? Name { get; set; }
         public IList<string> Role { get; set; } = [];
+        public string Status { get; set; } = "Active";
+        public string? CreatedOn { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
     }
 
     public class UserRoleDto

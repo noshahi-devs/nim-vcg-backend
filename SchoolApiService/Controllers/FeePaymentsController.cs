@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -247,18 +247,21 @@ namespace SchoolApiService.Controllers
         {
             if (feePayment.FeeStructures != null && feePayment.FeeStructures.Any())
             {
+                var feeTypeIds = feePayment.FeeStructures.Select(fs => fs.FeeTypeId).Distinct().ToList();
+                var feeTypesDictionary = _context.dbsFeeType
+                    .Where(ft => feeTypeIds.Contains(ft.FeeTypeId))
+                    .ToDictionary(ft => ft.FeeTypeId, ft => ft.TypeName);
+
                 foreach (var feeStructure in feePayment.FeeStructures)
                 {
-                    // Fetch FeeType for FeeTypeName
-                    var feeType = _context.dbsFeeType
-                        .Where(ft => ft.FeeTypeId == feeStructure.FeeTypeId)
-                        .FirstOrDefault();
+                    // Look up FeeTypeName from pre-fetched dictionary
+                    feeTypesDictionary.TryGetValue(feeStructure.FeeTypeId, out string? typeName);
 
                     var feePaymentDetail = new FeePaymentDetail
                     {
                         FeePaymentId = feePayment.FeePaymentId,
                         FeeAmount = feeStructure.FeeAmount,
-                        FeeTypeName = feeType?.TypeName // Set FeeTypeName based on FeeType
+                        FeeTypeName = typeName
                     };
 
                     _context.dbsfeePaymentDetails.Add(feePaymentDetail);

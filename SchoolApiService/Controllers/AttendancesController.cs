@@ -14,7 +14,7 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class AttendancesController : ControllerBase
     {
         private readonly SchoolDbContext _context;
@@ -116,6 +116,17 @@ namespace SchoolApiService.Controllers
                 return BadRequest("Invalid attendance identification number.");
             }
 
+            var today = attendance.Date.Date;
+            var alreadyMarked = await _context.dbsAttendance
+                .AnyAsync(a => a.Type == attendance.Type 
+                            && a.AttendanceIdentificationNumber == attendance.AttendanceIdentificationNumber 
+                            && a.Date.Date == today);
+
+            if (alreadyMarked)
+            {
+                return BadRequest("Attendance already marked for today.");
+            }
+
             _context.dbsAttendance.Add(attendance);
             await _context.SaveChangesAsync();
 
@@ -162,11 +173,13 @@ namespace SchoolApiService.Controllers
                 return BadRequest("Invalid attendance type.");
             }
 
+            var todayDate = DateTime.Today;
             // Find the most recent check-in record for this person that hasn't been checked out of
             var attendanceRecord = await _context.dbsAttendance
                 .Where(a => a.Type == checkOutInfo.Type 
                          && a.AttendanceIdentificationNumber == checkOutInfo.AttendanceIdentificationNumber 
-                         && a.CheckOutTime == null)
+                         && a.CheckOutTime == null
+                         && a.Date.Date == todayDate)
                 .OrderByDescending(a => a.Date)
                 .FirstOrDefaultAsync();
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,7 +14,7 @@ namespace SchoolApiService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class StaffsController(SchoolDbContext context) : ControllerBase
     {
         private readonly SchoolDbContext _context = context;

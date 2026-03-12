@@ -205,6 +205,7 @@ namespace SchoolApiService.Controllers
 
         [HttpGet]
         [Route("/GetUsers")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UserIndex()
         {
             return Ok(await _userManager.Users.ToListAsync());
@@ -369,7 +370,7 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpDelete("delete-user/{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -388,5 +389,38 @@ namespace SchoolApiService.Controllers
             var user = await _userManager.FindByEmailAsync(email);
             return Ok(new { exists = user != null });
         }
+
+        [HttpPut("toggle-status/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleUserStatus(string id, [FromBody] ToggleStatusDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound("User not found");
+
+            var isActive = dto.Status?.ToLower() == "active";
+
+            if (isActive)
+            {
+                // Activate: remove lockout
+                await _userManager.SetLockoutEnabledAsync(user, false);
+                await _userManager.SetLockoutEndDateAsync(user, null);
+                user.Status = "Active";
+            }
+            else
+            {
+                // Deactivate: lock out permanently
+                await _userManager.SetLockoutEnabledAsync(user, true);
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                user.Status = "Inactive";
+            }
+
+            await _userManager.UpdateAsync(user);
+            return Ok(new { message = $"User status updated to {dto.Status}" });
+        }
+    }
+
+    public class ToggleStatusDto
+    {
+        public string Status { get; set; } = "Active";
     }
 }
