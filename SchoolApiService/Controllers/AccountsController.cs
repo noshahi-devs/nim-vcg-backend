@@ -72,7 +72,11 @@ namespace SchoolApiService.Controllers
                 .Select(p => new { Date = p.PaymentDate, Description = "Student Fee Payment", Amount = p.AmountPaid, Type = "Income", Category = "Fee" })
                 .ToListAsync();
 
-            var all = incomes.Concat(expenses).Concat(fees)
+            var others = await _context.othersPayments
+                .Select(p => new { Date = p.PaymentDate, Description = "Miscellaneous Payment", Amount = p.AmountPaid, Type = "Income", Category = "Other" })
+                .ToListAsync();
+
+            var all = incomes.Concat(expenses).Concat(fees).Concat(others)
                 .OrderBy(x => x.Date)
                 .ToList();
 
@@ -93,7 +97,7 @@ namespace SchoolApiService.Controllers
                     Credit = credit,
                     Balance = balance
                 };
-            }).OrderByDescending(x => x.Date).ToList();
+            }).OrderByDescending(x => x.Date).ThenByDescending(x => x.Id).ToList();
 
             return Ok(ledger);
         }
@@ -103,6 +107,7 @@ namespace SchoolApiService.Controllers
             var incomes = await _context.GeneralIncomes.ToListAsync();
             var expenses = await _context.GeneralExpenses.ToListAsync();
             var feePayments = await _context.monthlyPayments.ToListAsync();
+            var otherPayments = await _context.othersPayments.ToListAsync();
 
             var monthMap = new Dictionary<string, (decimal Income, decimal Expenses)>();
 
@@ -123,6 +128,7 @@ namespace SchoolApiService.Controllers
 
             foreach (var i in incomes) ProcessItem(i.Date, i.Amount, true);
             foreach (var f in feePayments) ProcessItem(f.PaymentDate, f.AmountPaid, true);
+            foreach (var op in otherPayments) ProcessItem(op.PaymentDate, op.AmountPaid, true);
             foreach (var e in expenses) ProcessItem(e.Date, e.Amount, false);
 
             var sortedKeys = monthMap.Keys.OrderBy(k => k).ToList();
@@ -135,11 +141,12 @@ namespace SchoolApiService.Controllers
             var incomeSeries = sortedKeys.Select(k => monthMap[k].Income).ToList();
             var expenseSeries = sortedKeys.Select(k => monthMap[k].Expenses).ToList();
 
-            var totalIncome = incomes.Sum(i => i.Amount) + feePayments.Sum(f => f.AmountPaid);
+            var totalIncome = incomes.Sum(i => i.Amount) + feePayments.Sum(f => f.AmountPaid) + otherPayments.Sum(op => op.AmountPaid);
             var totalExpenses = expenses.Sum(e => e.Amount);
 
             var recentTransactions = incomes.Select(i => new { i.Date, Type = "Income", Category = i.Source, Description = i.Description, Amount = i.Amount })
                 .Concat(expenses.Select(e => new { e.Date, Type = "Expense", Category = e.ExpenseType, Description = e.Description, Amount = e.Amount }))
+                .Concat(otherPayments.Select(op => new { Date = op.PaymentDate, Type = "Income", Category = "Other Fees", Description = "Miscellaneous Payment", Amount = op.AmountPaid }))
                 .OrderByDescending(t => t.Date)
                 .Take(5)
                 .Select((t, idx) => new
