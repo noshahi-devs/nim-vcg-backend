@@ -15,7 +15,7 @@ namespace SchoolApiService.Controllers
         {
             var totalStudents = await _context.dbsStudent.CountAsync();
             var totalTeachers = await _context.dbsStaff
-                .Where(s => s.Department != null && s.Department.DepartmentName == "Teacher")
+                .Where(s => (s.Department != null && s.Department.DepartmentName == "Teacher") || s.Designation == SchoolApp.Models.DataModels.Designation.Teacher)
                 .CountAsync();
             var totalClasses = await _context.dbsStandard.CountAsync();
 
@@ -89,6 +89,29 @@ namespace SchoolApiService.Controllers
                 .ToListAsync();
 
             return Ok(distribution);
+        }
+
+        [HttpGet("weekly-admissions")]
+        public async Task<IActionResult> GetWeeklyAdmissions()
+        {
+            var sevenDaysAgo = DateTime.Now.Date.AddDays(-6);
+            var admissions = await _context.dbsStudent
+                .Where(s => s.CreatedAt >= sevenDaysAgo)
+                .GroupBy(s => s.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var labels = new List<string>();
+            var data = new List<int>();
+
+            for (int i = 6; i >= 0; i--)
+            {
+                var date = DateTime.Now.Date.AddDays(-i);
+                labels.Add(date.ToString("ddd"));
+                data.Add(admissions.FirstOrDefault(a => a.Date == date)?.Count ?? 0);
+            }
+
+            return Ok(new { Labels = labels, Data = data });
         }
     }
 }
