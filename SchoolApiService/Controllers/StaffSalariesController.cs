@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -92,6 +92,13 @@ namespace SchoolApiService.Controllers
             if (staffSalary == null)
             {
                 return NotFound();
+            }
+
+            // Remove foreign key references from Staff records to avoid 500 constraint error
+            var relatedStaffs = await _context.dbsStaff.Where(s => s.StaffSalaryId == id).ToListAsync();
+            foreach (var staff in relatedStaffs)
+            {
+                staff.StaffSalaryId = null;
             }
 
             _context.dbsStaffSalary.Remove(staffSalary);

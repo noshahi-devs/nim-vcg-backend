@@ -12,6 +12,8 @@ using SchoolApp.Models.DataModels.StaticModel;
 
 namespace SchoolApiService.Controllers
 {
+    using SchoolApiService.Services;
+    
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
@@ -111,9 +113,7 @@ namespace SchoolApiService.Controllers
 
             if (staff.ImageUpload?.ImageData != null)
             {
-                //productCategory.ImagePath = await imageUpload.Upload(productCategory.ImageUpload);
                 staff.ImagePath = staff.ImageUpload?.ImageData;
-
             }
             // Add the StaffExperiences to the context if they are provided
             if (staff.StaffExperiences != null && staff.StaffExperiences.Any())
@@ -213,9 +213,7 @@ namespace SchoolApiService.Controllers
 
             if (staff.ImageUpload?.ImageData != null)
             {
-                //productCategory.ImagePath = await imageUpload.Upload(productCategory.ImageUpload);
                 staff.ImagePath = staff.ImageUpload?.ImageData;
-
             }
 
             // Update the StaffExperiences if they are provided
@@ -285,11 +283,45 @@ namespace SchoolApiService.Controllers
                 return NotFound();
             }
 
-            // Remove associated StaffExperience entries
-            _context.dbsStaffExperience.RemoveRange(staff.StaffExperiences ?? new List<StaffExperience>());
+            // Check if the staff is a Class Teacher for any Section
+            var isSectionTeacher = await _context.Sections.AnyAsync(s => s.StaffId == id);
+            if (isSectionTeacher)
+            {
+                return BadRequest(new { message = "Cannot delete this staff member. They are a Class Teacher for one or more sections. Please reassign the section's class teacher first." });
+            }
 
-            _context.dbsStaff.Remove(staff);
-            await _context.SaveChangesAsync();
+            // Check for linked Subject Assignments
+            var hasSubjectAssignments = await _context.SubjectAssignments.AnyAsync(sa => sa.StaffId == id);
+            if (hasSubjectAssignments)
+            {
+                return BadRequest(new { message = "Cannot delete this staff member. They have subject assignments. Please remove the subject assignments first." });
+            }
+
+            // Check for linked Leaves
+            var hasLeaves = await _context.Leaves.AnyAsync(l => l.StaffId == id);
+            if (hasLeaves)
+            {
+                return BadRequest(new { message = "Cannot delete this staff member. They have leave records. Please remove the leave records first." });
+            }
+
+            // Check for linked Marks
+            var hasMarks = await _context.dbsMark.AnyAsync(m => m.StaffId == id);
+            if (hasMarks)
+            {
+                return BadRequest(new { message = "Cannot delete this staff member. They have mark records. Please remove the mark records first." });
+            }
+
+            try
+            {
+                // Remove associated StaffExperience entries first
+                _context.dbsStaffExperience.RemoveRange(staff.StaffExperiences ?? new List<StaffExperience>());
+                _context.dbsStaff.Remove(staff);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the staff member. They may have other linked records.", details = ex.InnerException?.Message ?? ex.Message });
+            }
 
             return NoContent();
         }

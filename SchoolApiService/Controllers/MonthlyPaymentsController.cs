@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
@@ -24,11 +24,14 @@ namespace SchoolApiService.Controllers
             try
             {
                 var monthlyPaments = await _context.monthlyPayments
-
                     .Include(fp => fp.PaymentDetails)
                     .Include(fp => fp.paymentMonths)
-                    .Include(fp => fp.Student)
+                    .Include(fp => fp.Student).ThenInclude(s => s.Standard)
+
+
                     .Include(fp => fp.dueBalances)
+                    .Include(fp => fp.fees).ThenInclude(f => f.feeType)
+                    .Include(fp => fp.academicMonths)
                     .ToListAsync();
 
                 return Ok(monthlyPaments);
@@ -47,11 +50,12 @@ namespace SchoolApiService.Controllers
             try
             {
                 var monthlyPayment = await _context.monthlyPayments
-
                     .Include(fp => fp.PaymentDetails)
                     .Include(fp => fp.paymentMonths)
-                    .Include(fp => fp.Student)
+                    .Include(fp => fp.Student).ThenInclude(s => s.Standard)
                     .Include(fp => fp.dueBalances)
+                    .Include(fp => fp.fees).ThenInclude(f => f.feeType)
+                    .Include(fp => fp.academicMonths)
                     .FirstOrDefaultAsync(fp => fp.MonthlyPaymentId == id);
 
                 if (monthlyPayment == null)

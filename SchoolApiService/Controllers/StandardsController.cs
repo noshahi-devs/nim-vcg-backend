@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -116,6 +116,7 @@ namespace SchoolApiService.Controllers
             var standard = await _context.dbsStandard
                 .Include(s => s.Students)
                 .Include(s => s.Subjects)
+                .Include(s => s.Sections)
                 .Include(s => s.ExamScheduleStandards)
                 .FirstOrDefaultAsync(s => s.StandardId == id);
 
@@ -127,24 +128,28 @@ namespace SchoolApiService.Controllers
             // Check if there are any students referencing this standard
             if (standard.Students != null && standard.Students.Any())
             {
-                return BadRequest($"Cannot delete Class. It has {standard.Students.Count} associated Students.");
+                return BadRequest(new { message = $"Cannot delete Class. It has {standard.Students.Count} associated Students enrolled." });
             }
 
             // Check for Subjects
-             if (standard.Subjects != null && standard.Subjects.Any())
+            if (standard.Subjects != null && standard.Subjects.Any())
             {
-                 // Optionally: You could remove subjects from the standard if it's a many-to-many link, 
-                 // but for now let's prevent delete to be safe.
-                 return BadRequest($"Cannot delete Class. It has {standard.Subjects.Count} associated Subjects.");
+                return BadRequest(new { message = $"Cannot delete Class. It has {standard.Subjects.Count} associated Subjects assigned." });
+            }
+
+            // Check for Sections
+            if (standard.Sections != null && standard.Sections.Any())
+            {
+                return BadRequest(new { message = $"Cannot delete Class. It has {standard.Sections.Count} active Sections." });
             }
 
             // Check for Exams
-             if (standard.ExamScheduleStandards != null && standard.ExamScheduleStandards.Any())
+            if (standard.ExamScheduleStandards != null && standard.ExamScheduleStandards.Any())
             {
-                 return BadRequest($"Cannot delete Class. It has {standard.ExamScheduleStandards.Count} associated Exams scheduled.");
+                return BadRequest(new { message = $"Cannot delete Class. It has {standard.ExamScheduleStandards.Count} associated Exams scheduled." });
             }
 
-            try 
+            try
             {
                 _context.dbsStandard.Remove(standard);
                 await _context.SaveChangesAsync();
@@ -152,7 +157,7 @@ namespace SchoolApiService.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = "Internal server error occurred while deleting the class.", details = ex.Message });
             }
         }
 

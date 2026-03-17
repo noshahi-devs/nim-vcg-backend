@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -53,6 +53,18 @@ namespace SchoolApiService.Controllers
             }
 
             _context.Entry(subject).State = EntityState.Modified;
+            
+            // Check for duplicate SubjectCode if it's changing
+            if (subject.SubjectCode.HasValue)
+            {
+                var existingSubjectWithCode = await _context.dbsSubject
+                    .AnyAsync(s => s.SubjectCode == subject.SubjectCode && s.SubjectId != id);
+                
+                if (existingSubjectWithCode)
+                {
+                    return BadRequest(new { message = $"A subject with the code '{subject.SubjectCode}' already exists. Please use a unique code." });
+                }
+            }
 
             try
             {
@@ -69,6 +81,14 @@ namespace SchoolApiService.Controllers
                     throw;
                 }
             }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException?.Message.Contains("SubjectCode") == true || ex.InnerException?.Message.Contains("Unique") == true)
+                {
+                    return BadRequest(new { message = $"A subject with the code '{subject.SubjectCode}' already exists. Please use a unique code." });
+                }
+                return StatusCode(500, new { message = "An error occurred while updating the subject.", details = ex.Message });
+            }
 
             return NoContent();
         }
@@ -78,8 +98,29 @@ namespace SchoolApiService.Controllers
         [HttpPost]
         public async Task<ActionResult<Subject>> PostSubject(Subject subject)
         {
-            _context.dbsSubject.Add(subject);
-            await _context.SaveChangesAsync();
+            // Check for duplicate SubjectCode
+            if (subject.SubjectCode.HasValue)
+            {
+                var existingSubjectWithCode = await _context.dbsSubject.AnyAsync(s => s.SubjectCode == subject.SubjectCode);
+                if (existingSubjectWithCode)
+                {
+                    return BadRequest(new { message = $"A subject with the code '{subject.SubjectCode}' already exists. Please use a unique code." });
+                }
+            }
+
+            try
+            {
+                _context.dbsSubject.Add(subject);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException?.Message.Contains("SubjectCode") == true || ex.InnerException?.Message.Contains("Unique") == true)
+                {
+                    return BadRequest(new { message = $"A subject with the code '{subject.SubjectCode}' already exists. Please use a unique code." });
+                }
+                return StatusCode(500, new { message = "An error occurred while saving the subject.", details = ex.Message });
+            }
 
             return CreatedAtAction("GetSubject", new { id = subject.SubjectId }, subject);
         }
@@ -94,8 +135,29 @@ namespace SchoolApiService.Controllers
                 return NotFound();
             }
 
-            _context.dbsSubject.Remove(subject);
-            await _context.SaveChangesAsync();
+            // Check for related Marks
+            var hasMarks = await _context.dbsMark.AnyAsync(m => m.SubjectId == id);
+            if (hasMarks)
+            {
+                return BadRequest(new { message = "Cannot delete subject because it has associated student marks. Please remove or reassign the marks first." });
+            }
+
+            // Check for related SubjectAssignments
+            var hasAssignments = await _context.SubjectAssignments.AnyAsync(sa => sa.SubjectId == id);
+            if (hasAssignments)
+            {
+                return BadRequest(new { message = "Cannot delete subject because it is currently assigned to sections/teachers. Please remove the assignments first." });
+            }
+
+            try
+            {
+                _context.dbsSubject.Remove(subject);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the subject. It may have dependent records.", details = ex.Message });
+            }
 
             return NoContent();
         }

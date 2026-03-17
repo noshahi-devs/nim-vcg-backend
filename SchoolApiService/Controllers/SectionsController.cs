@@ -87,8 +87,29 @@ namespace SchoolApiService.Controllers
                 return NotFound();
             }
 
-            _context.Sections.Remove(section);
-            await _context.SaveChangesAsync();
+            // Check for related Students (using the DbSet name found in SchoolDbContext)
+            var hasStudents = await _context.dbsStudent.AnyAsync(s => s.SectionId == id);
+            if (hasStudents)
+            {
+                return BadRequest(new { message = "Cannot delete section because it has students enrolled. Please reassign or remove the students first." });
+            }
+
+            // Check for related SubjectAssignments
+            var hasAssignments = await _context.SubjectAssignments.AnyAsync(sa => sa.SectionId == id);
+            if (hasAssignments)
+            {
+                return BadRequest(new { message = "Cannot delete section because it has subject assignments. Please remove the assignments first." });
+            }
+
+            try
+            {
+                _context.Sections.Remove(section);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the section. It may have dependent records.", details = ex.Message });
+            }
 
             return NoContent();
         }

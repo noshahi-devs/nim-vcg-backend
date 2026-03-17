@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
@@ -25,9 +25,10 @@ namespace SchoolApiService.Controllers
             try
             {
                 var othersPayments = await _context.othersPayments
-
+                    .Include(fp => fp.fees).ThenInclude(f => f.feeType)
+                    .Include(fp => fp.academicMonths)
                     .Include(fp => fp.otherPaymentDetails)
-                   .Include(fp => fp.Student)
+                   .Include(fp => fp.Student).ThenInclude(s => s.Standard)
 
                     .ToListAsync();
 
@@ -47,9 +48,12 @@ namespace SchoolApiService.Controllers
             try
             {
                 var monthlyPayment = await _context.othersPayments
-
+                    .Include(fp => fp.fees).ThenInclude(f => f.feeType)
+                    .Include(fp => fp.academicMonths)
                     .Include(fp => fp.otherPaymentDetails)
-                     .Include(fp => fp.Student)
+                     .Include(fp => fp.Student).ThenInclude(s => s.Standard)
+
+
 
                     .FirstOrDefaultAsync(fp => fp.OthersPaymentId == id);
 
@@ -89,6 +93,7 @@ namespace SchoolApiService.Controllers
                 {
                     var existingPayment = await _context.othersPayments
                         .Include(fp => fp.fees)
+                        .Include(fp => fp.academicMonths)
                         .Include(fp => fp.otherPaymentDetails)
                         .FirstOrDefaultAsync(p => p.OthersPaymentId == id);
 
@@ -101,12 +106,15 @@ namespace SchoolApiService.Controllers
                     existingPayment.StudentId = updatedPayment.StudentId;
                     existingPayment.TotalAmount = updatedPayment.TotalAmount;
                     existingPayment.AmountPaid = updatedPayment.AmountPaid;
+                    existingPayment.Waver = updatedPayment.Waver;
 
                     // Clear existing payment details
                     existingPayment.otherPaymentDetails.Clear();
+                    existingPayment.academicMonths.Clear();
 
                     // Attach new fees and save payment details
                     await AttachFeeAsync(existingPayment, updatedPayment);
+                    await AttachAcademicMonthAsync(existingPayment, updatedPayment);
                     await SavePaymentDetailAsync(existingPayment);
 
                     // Recalculate payment fields
@@ -159,6 +167,7 @@ namespace SchoolApiService.Controllers
                 try
                 {
                     await AttachFeeAsync(othersPayment);
+                    await AttachAcademicMonthAsync(othersPayment);
                     await CalculatePaymentFieldsAsync(othersPayment);
 
                     _context.othersPayments.Add(othersPayment);
@@ -252,7 +261,9 @@ namespace SchoolApiService.Controllers
 
             othersPayment.TotalAmount = othersPayment.fees?.Sum(fs => fs.Amount) ?? 0;
 
-            othersPayment.AmountRemaining = othersPayment.TotalAmount - othersPayment.AmountPaid;
+            decimal totalAfterDiscount = othersPayment.TotalAmount - (othersPayment.TotalAmount * (othersPayment.Waver / 100));
+
+            othersPayment.AmountRemaining = totalAfterDiscount - othersPayment.AmountPaid;
 
         }
 
@@ -265,6 +276,26 @@ namespace SchoolApiService.Controllers
             {
                 othersPayment.fees = await _context.fees
                     .Where(fs => othersPayment.fees.Select(f => f.FeeId).Contains(fs.FeeId))
+                    .ToListAsync();
+            }
+        }
+
+        private async Task AttachAcademicMonthAsync(OthersPayment existingOthersPayment, OthersPayment updatedOthersPayment)
+        {
+            if (updatedOthersPayment.academicMonths != null && updatedOthersPayment.academicMonths.Any())
+            {
+                existingOthersPayment.academicMonths = await _context.dbsAcademicMonths
+                    .Where(am => updatedOthersPayment.academicMonths.Select(m => m.MonthId).Contains(am.MonthId))
+                    .ToListAsync();
+            }
+        }
+
+        private async Task AttachAcademicMonthAsync(OthersPayment othersPayment)
+        {
+            if (othersPayment.academicMonths != null && othersPayment.academicMonths.Any())
+            {
+                othersPayment.academicMonths = await _context.dbsAcademicMonths
+                    .Where(am => othersPayment.academicMonths.Select(m => m.MonthId).Contains(am.MonthId))
                     .ToListAsync();
             }
         }

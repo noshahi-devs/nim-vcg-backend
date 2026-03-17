@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
@@ -37,10 +37,10 @@ namespace SchoolApiService.Controllers
 
             if (payments == null || payments.Count == 0)
             {
-                return NotFound();
+                return Ok(new List<MonthlyPayment>());
             }
 
-            return payments;
+            return Ok(payments);
         }
 
         [HttpGet("GetAllOtherPaymentByStudentId/{studentId}")]
@@ -53,10 +53,10 @@ namespace SchoolApiService.Controllers
 
             if (otherPayments == null || otherPayments.Count == 0)
             {
-                return NotFound();
+                return Ok(new List<OthersPayment>());
             }
 
-            return otherPayments;
+            return Ok(otherPayments);
         }
 
 

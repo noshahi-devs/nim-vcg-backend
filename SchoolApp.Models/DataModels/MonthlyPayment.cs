@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -28,8 +28,8 @@ namespace SchoolApp.Models.DataModels
         public DateTime PaymentDate { get; set; } = DateTime.Now;
 
         public Student? Student { get; set; }
-        public IList<Fee> fees { get; set; }
-        public IList<AcademicMonth> academicMonths { get; set; }
+        public IList<Fee>? fees { get; set; }
+        public IList<AcademicMonth>? academicMonths { get; set; }
         public IList<PaymentMonth>? paymentMonths { get; set; }
 
         public IList<PaymentDetail>? PaymentDetails { get; set; }

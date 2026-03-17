@@ -99,6 +99,12 @@ namespace SchoolApiService.Controllers
                 student.Section = student.SectionObject.SectionName; // keeping fallback copy
             }
 
+            // Check if the ImageUpload is provided
+            if (student.ImageUpload?.ImageData != null)
+            {
+                student.ImagePath = student.ImageUpload?.ImageData;
+            }
+
             _context.Entry(student).State = EntityState.Modified;
 
             try
@@ -320,10 +326,47 @@ namespace SchoolApiService.Controllers
                 return NotFound();
             }
 
-            _context.dbsStudent.Remove(student);
-            await _context.SaveChangesAsync();
+            // 1. Check for dependencies to provide better error messages
+            var dependencies = new List<string>();
 
-            return NoContent();
+            if (await _context.dbsMark.AnyAsync(m => m.StudentId == id) || 
+                await _context.dbsStudentMarksDetails.AnyAsync(md => md.StudentId == id))
+                dependencies.Add("Academic Marks/Details");
+
+            if (await _context.dbsAttendance.AnyAsync(a => a.AttendanceIdentificationNumber == student.UniqueStudentAttendanceNumber))
+                dependencies.Add("Attendance Records");
+
+            if (await _context.monthlyPayments.AnyAsync(p => p.StudentId == id) ||
+                await _context.othersPayments.AnyAsync(p => p.StudentId == id))
+                dependencies.Add("Payment History");
+
+            if (await _context.dbsDueBalance.AnyAsync(d => d.StudentId == id))
+                dependencies.Add("Outstanding Dues");
+
+            if (await _context.NotificationLogs.AnyAsync(n => n.StudentId == id))
+                dependencies.Add("Communication Logs");
+
+            if (dependencies.Any())
+            {
+                var depList = string.Join(", ", dependencies);
+                return BadRequest($"Unable to delete student <strong>{student.StudentName}</strong> because active records exist for: <strong>{depList}</strong>. Please remove these records first to maintain data integrity.");
+            }
+
+            // 2. Wrap deletion in a try-catch to handle any slipped-through FK constraints
+            try
+            {
+                _context.dbsStudent.Remove(student);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest($"Unable to delete student <strong>{student.StudentName}</strong>. This record is linked to other system data that must be removed first.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An unexpected error occurred while deleting the student: {ex.Message}");
+            }
         }
 
         private bool StudentExists(int id)

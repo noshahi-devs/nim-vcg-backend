@@ -1,4 +1,4 @@
-﻿using SchoolApp.Models.DataModels.StaticModel;
+using SchoolApp.Models.DataModels.StaticModel;
 
 namespace SchoolApiService.Services
 {
@@ -16,38 +16,52 @@ namespace SchoolApiService.Services
         {
             try
             {
-                string base64Data = upload.ImageData.Replace('_', '/').Replace('-', '+');
+                if (string.IsNullOrEmpty(upload.ImageData)) return null;
 
-                //			upload.ImageData = upload.ImageData.Substring(1, upload.ImageData.Length - 2)
-                //.Replace(@"\/", "/");
+                string base64Data = upload.ImageData;
+                
+                // Strip data URI prefix if present (e.g., "data:image/jpeg;base64,")
+                if (base64Data.Contains(";base64,"))
+                {
+                    base64Data = base64Data.Split(";base64,")[1];
+                }
 
-                //			Regex regex = new Regex(@"^[\w/\:.-]+;base64,");
-                //			base64Data = regex.Replace(upload.ImageData, string.Empty);
+                // Handle Base64URL characters if any
+                base64Data = base64Data.Replace('_', '/').Replace('-', '+');
+                
+                // Add padding if missing
+                int mod4 = base64Data.Length % 4;
+                if (mod4 > 0) base64Data += new string('=', 4 - mod4);
 
-                //string base64Data = upload.ImageData.Split(";base64,")[1];
-
-                byte[] bits = Convert.FromBase64String(upload.ImageData);
+                byte[] bits = Convert.FromBase64String(base64Data);
 
                 if (string.IsNullOrEmpty(upload.ImageName))
                 {
                     upload.ImageName = Guid.NewGuid().ToString() + ".png";
                 }
 
-                upload.ImageName = "/images/" + upload.ImageName;
-                string path = this.hostEnvironment + "/" + upload.ImageName;
-                using (FileStream ms = new FileStream(path, FileMode.Create))
+                // Ensure the images directory exists
+                string imagesDir = Path.Combine(hostEnvironment.WebRootPath, "images");
+                if (!Directory.Exists(imagesDir))
                 {
-                    await ms.WriteAsync(bits);
-                    await ms.FlushAsync();
+                    Directory.CreateDirectory(imagesDir);
                 }
+
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(upload.ImageName);
+                if (string.IsNullOrEmpty(Path.GetExtension(fileName))) fileName += ".png";
+                
+                string relativePath = "/images/" + fileName;
+                string fullPath = Path.Combine(hostEnvironment.WebRootPath, "images", fileName);
+
+                await File.WriteAllBytesAsync(fullPath, bits);
+
+                return relativePath;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-
+                Console.WriteLine($"Error uploading image: {ex.Message}");
+                return null;
             }
-
-            return upload.ImageName;
         }
 
 

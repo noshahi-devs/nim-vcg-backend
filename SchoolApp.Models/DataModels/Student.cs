@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
@@ -101,7 +101,10 @@ namespace SchoolApp.Models.DataModels
         public Standard? Standard { get; set; }
 
         public string? Section { get; set; }
+        public string? GuardianPhone { get; set; }
+        public string? PreviousSchool { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? AdmissionDate { get; set; }
 
         public string? Status { get; set; }
 

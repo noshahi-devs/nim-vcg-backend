@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
@@ -17,6 +17,12 @@ namespace SchoolApp.Models.DataModels
 
         [Required]
         public string? ExamScheduleName { get; set; }
+
+        public DateTime? StartDate { get; set; }
+
+        public DateTime? EndDate { get; set; }
+
+        public string? ExamYear { get; set; }
 
         public int? AcademicYearId { get; set; }
 
