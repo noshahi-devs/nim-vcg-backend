@@ -21,6 +21,7 @@ namespace SchoolApp.Models.DataModels.SecurityModels
     {
         public string? Id { get; set; }
         public string Name { get; set; }
+        public IList<string>? Permissions { get; set; } = new List<string>();
     }
 
     public class AssignRoleDto

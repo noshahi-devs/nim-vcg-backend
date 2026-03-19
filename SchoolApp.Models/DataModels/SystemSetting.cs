@@ -14,8 +14,7 @@ namespace SchoolApp.Models.DataModels
         [MaxLength(100)]
         public string SettingKey { get; set; } = string.Empty;
 
-        [Required]
-        public string SettingValue { get; set; } = string.Empty;
+        public string? SettingValue { get; set; } = string.Empty;
 
         [MaxLength(200)]
         public string? Category { get; set; }

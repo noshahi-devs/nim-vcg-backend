@@ -218,11 +218,26 @@ namespace SchoolApiService.Controllers
 
         [HttpGet]
         [Route("/GetRoles")]
-        //[Authorize(Roles = "Admin, ")]
         [Authorize()]
         public async Task<IActionResult> RoleIndex()
         {
-            return Ok(await _roleManager.Roles.ToListAsync());
+            var roles = await _roleManager.Roles.ToListAsync();
+            var roleDtos = new List<UserRoleDto>();
+
+            foreach (var role in roles)
+            {
+                var claims = await _roleManager.GetClaimsAsync(role);
+                var permissions = claims.Where(c => c.Type == "Permission").Select(c => c.Value).ToList();
+                
+                roleDtos.Add(new UserRoleDto
+                {
+                    Id = role.Id,
+                    Name = role.Name,
+                    Permissions = permissions
+                });
+            }
+
+            return Ok(roleDtos);
         }
 
         [HttpPost("create-role")]
@@ -238,6 +253,13 @@ namespace SchoolApiService.Controllers
 
             if (result.Succeeded)
             {
+                if (request.Permissions != null && request.Permissions.Any())
+                {
+                    foreach (var perm in request.Permissions)
+                    {
+                        await _roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("Permission", perm));
+                    }
+                }
                 return Ok(request);
             }
             foreach (var error in result.Errors)
@@ -263,6 +285,25 @@ namespace SchoolApiService.Controllers
 
             if (result.Succeeded)
             {
+                // Update claims if permissions are provided
+                if (request.Permissions != null)
+                {
+                    var existingClaims = await _roleManager.GetClaimsAsync(role);
+                    var permissionClaims = existingClaims.Where(c => c.Type == "Permission").ToList();
+
+                    // Remove current permission claims
+                    foreach (var claim in permissionClaims)
+                    {
+                        await _roleManager.RemoveClaimAsync(role, claim);
+                    }
+
+                    // Add new permissions
+                    foreach (var perm in request.Permissions)
+                    {
+                        await _roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("Permission", perm));
+                    }
+                }
+
                 return Ok(request);
             }
             foreach (var error in result.Errors)
