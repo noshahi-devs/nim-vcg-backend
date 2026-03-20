@@ -11,12 +11,13 @@ using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels.SecurityModels;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace SchoolApiService
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +67,7 @@ namespace SchoolApiService
 
             var connectionString = builder.Configuration.GetConnectionString("LocalDbConnection");
             builder.Services.AddDbContext<SchoolDbContext>(options =>
-              options.UseSqlServer(connectionString));
+              options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
             //builder.Services.AddDbContext<SchoolDbContext>(opt =>
             //{
@@ -247,6 +248,22 @@ namespace SchoolApiService
             //app.Run();
             var app = builder.Build();
 
+            // Seed Admin User
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+                    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                    await DataSeeder.SeedAdminUser(userManager, roleManager);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error seeding database: {ex.Message}");
+                }
+            }
+
             // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
@@ -259,7 +276,10 @@ namespace SchoolApiService
 
             // ⭐ CORS MUST BE BEFORE HttpsRedirection and Authentication
             app.UseCors("AllowAll");
-            app.UseHttpsRedirection();
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
             app.UseStaticFiles();
 
             // Authentication & Authorization AFTER CORS

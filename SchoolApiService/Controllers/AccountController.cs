@@ -39,6 +39,10 @@ namespace SchoolApiService.Controllers
 
             if (!ModelState.IsValid)
             {
+                var errors = string.Join("; ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                Console.WriteLine($"[AccountController] Registration model invalid for {request.Email}: {errors}");
                 return BadRequest(ModelState);
             }
 
@@ -99,6 +103,12 @@ namespace SchoolApiService.Controllers
             {
                 ModelState.AddModelError(error.Code, error.Description);
             }
+
+            // Log errors for debugging
+            var errorMessages = string.Join("; ", ModelState.Values
+                .SelectMany(x => x.Errors)
+                .Select(x => x.ErrorMessage));
+            Console.WriteLine($"Registration failed for {request.Email}: {errorMessages}");
 
             return BadRequest(ModelState);
         }
