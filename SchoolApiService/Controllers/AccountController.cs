@@ -141,6 +141,11 @@ namespace SchoolApiService.Controllers
                 return BadRequest(new { message = "User account not found. Please ensure you have registered correctly." });
             }
 
+            if (await _userManager.IsLockedOutAsync(managedUser) || managedUser.Status == "Inactive")
+            {
+                return BadRequest(new { message = "Your account has been deactivated. Please contact the administrator." });
+            }
+
             var isPasswordValid = await _userManager.CheckPasswordAsync(managedUser, request.Password!);
 
             if (!isPasswordValid)

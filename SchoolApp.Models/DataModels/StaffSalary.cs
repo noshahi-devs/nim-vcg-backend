@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
@@ -15,8 +15,11 @@ namespace SchoolApp.Models.DataModels
 
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int StaffSalaryId { get; set; }
+        public int? StaffSalaryId { get; set; }
         public string? StaffName { get; set; }
+        public int? StaffId { get; set; }
+        public DateTime? PaymentDate { get; set; } = DateTime.Now;
+        public string? PaymentMonth { get; set; }
         public decimal? BasicSalary { get; set; }
         public decimal? FestivalBonus { get; set; }
         public decimal? Allowance { get; set; }

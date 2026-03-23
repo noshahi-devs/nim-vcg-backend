@@ -23,13 +23,60 @@ namespace SchoolApiService.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Staff>>> GetdbsStaff()
+        public async Task<ActionResult> GetdbsStaff()
         {
-            return await _context.dbsStaff
-                .Include(m => m.Department)
-                .Include(m => m.StaffSalary)
-                .Include(m => m.StaffExperiences)
-                .ToListAsync();
+            try
+            {
+                var staffs = await _context.dbsStaff
+                    .Include(m => m.Department)
+                    .Include(m => m.StaffSalary)
+                    .Include(m => m.StaffExperiences)
+                    .Select(s => new
+                    {
+                        s.StaffId,
+                        s.StaffName,
+                        s.Email,
+                        s.ImagePath,
+                        s.UniqueStaffAttendanceNumber,
+                        Gender = s.Gender != null ? s.Gender.ToString() : null,
+                        s.DOB,
+                        s.FatherName,
+                        s.MotherName,
+                        s.CNIC,
+                        s.Experience,
+                        s.TemporaryAddress,
+                        s.PermanentAddress,
+                        s.ContactNumber1,
+                        s.Qualifications,
+                        s.JoiningDate,
+                        Designation = s.Designation != null ? s.Designation.ToString() : null,
+                        s.BankAccountName,
+                        s.BankAccountNumber,
+                        s.BankName,
+                        s.BankBranch,
+                        s.Status,
+                        s.DepartmentId,
+                        DepartmentName = s.Department != null ? s.Department.DepartmentName : null,
+                        s.StaffSalaryId,
+                        StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
+                        {
+                            e.StaffExperienceId,
+                            e.CompanyName,
+                            e.Designation,
+                            e.JoiningDate,
+                            e.LeavingDate,
+                            e.Responsibilities,
+                            e.Achievements
+                        }).ToList() : null
+                    })
+                    .ToListAsync();
+
+                return Ok(staffs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Internal error fetching staff list", message = ex.Message, inner = ex.InnerException?.Message });
+            }
         }
 
         [HttpGet("{id}")]
@@ -61,20 +108,66 @@ namespace SchoolApiService.Controllers
      
 
         [HttpGet("ByEmail/{email}")]
-        public async Task<ActionResult<Staff>> GetStaffByEmail(string email)
+        public async Task<ActionResult> GetStaffByEmail(string email)
         {
-            var staff = await _context.dbsStaff
-                .Include(m => m.Department)
-                .Include(m => m.StaffSalary)
-                .Include(m => m.StaffExperiences)
-                .FirstOrDefaultAsync(m => m.Email == email);
-
-            if (staff == null)
+            try
             {
-                return NotFound("Sorry! No Staff found with this email.");
-            }
+                var staff = await _context.dbsStaff
+                    .Include(m => m.Department)
+                    .Include(m => m.StaffSalary)
+                    .Include(m => m.StaffExperiences)
+                    .Where(m => m.Email == email)
+                    .Select(s => new
+                    {
+                        s.StaffId,
+                        s.StaffName,
+                        s.Email,
+                        s.ImagePath,
+                        s.UniqueStaffAttendanceNumber,
+                        Gender = s.Gender != null ? s.Gender.ToString() : null,
+                        s.DOB,
+                        s.FatherName,
+                        s.MotherName,
+                        s.CNIC,
+                        s.Experience,
+                        s.TemporaryAddress,
+                        s.PermanentAddress,
+                        s.ContactNumber1,
+                        s.Qualifications,
+                        s.JoiningDate,
+                        Designation = s.Designation != null ? s.Designation.ToString() : null,
+                        s.BankAccountName,
+                        s.BankAccountNumber,
+                        s.BankName,
+                        s.BankBranch,
+                        s.Status,
+                        s.DepartmentId,
+                        DepartmentName = s.Department != null ? s.Department.DepartmentName : null,
+                        s.StaffSalaryId,
+                        StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
+                        {
+                            e.StaffExperienceId,
+                            e.CompanyName,
+                            e.Designation,
+                            e.JoiningDate,
+                            e.LeavingDate,
+                            e.Responsibilities,
+                            e.Achievements
+                        }).ToList() : null
+                    })
+                    .FirstOrDefaultAsync();
 
-            return staff;
+                if (staff == null)
+                {
+                    return NotFound(new { error = "Sorry! No Staff found with this email." });
+                }
+
+                return Ok(staff);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Internal error fetching staff by email", message = ex.Message, inner = ex.InnerException?.Message });
+            }
         }
 
         #region Default_Post

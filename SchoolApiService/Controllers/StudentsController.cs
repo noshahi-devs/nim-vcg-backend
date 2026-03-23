@@ -170,9 +170,12 @@ namespace SchoolApiService.Controllers
             int nextAdmissionNo = 1000;
             int nextEnrollmentNo = 2000;
 
-            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-            try
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync<ActionResult<Student>>(async () =>
             {
+                using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                try
+                {
                 if (await _context.dbsStudent.AnyAsync())
                 {
                     nextAttendanceNumber = await _context.dbsStudent.MaxAsync(s => s.UniqueStudentAttendanceNumber) + 1;
@@ -240,14 +243,14 @@ namespace SchoolApiService.Controllers
                 _context.Entry(student).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 return BadRequest($"Unable to save changes: {ex.InnerException?.Message ?? ex.Message}");
             }
-
-            return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
+            });
         }
 
         private async Task<(ApplicationUser? User, bool Succeeded, string? ErrorMessage)> CreateUserIfNotExist(string email, string name, string role, string? providedPassword = null)

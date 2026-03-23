@@ -18,6 +18,9 @@ namespace SchoolApiService.Controllers
                 .Where(s => (s.Department != null && s.Department.DepartmentName == "Teacher") || s.Designation == SchoolApp.Models.DataModels.Designation.Teacher)
                 .CountAsync();
             var totalClasses = await _context.dbsStandard.CountAsync();
+            var totalStaff = await _context.dbsStaff.CountAsync();
+            var totalSections = await _context.Sections.CountAsync();
+            var totalSubjects = await _context.dbsSubject.CountAsync();
 
             var currentMonth = DateTime.Now.Month;
             var currentYear = DateTime.Now.Year;
@@ -35,6 +38,9 @@ namespace SchoolApiService.Controllers
                 TotalStudents = totalStudents,
                 TotalTeachers = totalTeachers,
                 TotalClasses = totalClasses,
+                TotalStaff = totalStaff,
+                TotalSections = totalSections,
+                TotalSubjects = totalSubjects,
                 IncomeThisMonth = totalIncome,
                 ExpenseThisMonth = totalExpense
             });
