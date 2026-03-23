@@ -121,32 +121,76 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet("exam/{examId}")]
-        public async Task<IActionResult> GetResultsByExam(int examId)
+        public async Task<IActionResult> GetResultsByExam(int examId, int? classId = null, int? sectionId = null)
         {
             try
             {
-                var results = await _context.dbsStudentMarksDetails
-                    .Where(sd => sd.MarkEntry.ExamScheduleId == examId)
-                    .Select(sd => new
-                    {
-                        sd.StudentId,
-                        StudentName = sd.Student != null ? sd.Student.StudentName : sd.StudentName,
-                        Subject = sd.MarkEntry != null && sd.MarkEntry.Subject != null ? sd.MarkEntry.Subject.SubjectName : "N/A",
-                        ObtainedScore = sd.ObtainedScore ?? 0,
-                        TotalMarks = sd.MarkEntry != null ? (sd.MarkEntry.TotalMarks ?? 0) : 0,
-                        Grade = sd.Grade ?? "—",
-                        Status = sd.PassStatus.HasValue ? sd.PassStatus.ToString() : "Passed"
-                    })
-                    .OrderBy(r => r.StudentName)
+                var query = _context.dbsStudentMarksDetails
+                    .Where(sd => sd.MarkEntry.ExamScheduleId == examId);
+
+                if (classId.HasValue && classId > 0)
+                    query = query.Where(sd => sd.Student.StandardId == classId);
+
+                if (sectionId.HasValue && sectionId > 0)
+                    query = query.Where(sd => sd.Student.SectionId == sectionId);
+
+                var rawData = await query
+                    .Include(sd => sd.Student)
+                        .ThenInclude(s => s.Standard)
+                    .Include(sd => sd.Student)
+                        .ThenInclude(s => s.SectionObject)
+                    .Include(sd => sd.MarkEntry)
+                        .ThenInclude(me => me.Subject)
+                    .AsNoTracking()
                     .ToListAsync();
 
-                return Ok(results);
+                var aggregated = rawData
+                    .GroupBy(sd => sd.StudentId)
+                    .Select(g => {
+                        var first = g.First();
+                        var totalMarks = g.Sum(x => x.MarkEntry?.TotalMarks ?? 0);
+                        var obtainedMarks = g.Sum(x => x.ObtainedScore ?? 0);
+                        var percentage = totalMarks > 0 ? Math.Round((decimal)obtainedMarks / totalMarks * 100, 2) : 0m;
+
+                        return new
+                        {
+                            studentId = g.Key,
+                            studentName = first.Student?.StudentName ?? first.StudentName,
+                            rollNo = first.Student?.AdmissionNo,
+                            className = first.Student?.Standard?.StandardName ?? "N/A",
+                            sectionName = first.Student?.SectionObject?.SectionName ?? first.Student?.Section ?? "N/A",
+                            totalMarks = totalMarks,
+                            obtainedMarks = obtainedMarks,
+                            percentage = percentage,
+                            grade = GetOverallGrade(percentage),
+                            subjects = g.Select(s => new {
+                                subjectName = s.MarkEntry?.Subject?.SubjectName ?? "N/A",
+                                totalMarks = s.MarkEntry?.TotalMarks ?? 0,
+                                obtainedMarks = s.ObtainedScore ?? 0,
+                                grade = s.Grade ?? "—",
+                                status = s.PassStatus?.ToString() ?? "Passed"
+                            }).ToList()
+                        };
+                    })
+                    .OrderBy(r => r.studentName)
+                    .ToList();
+
+                return Ok(aggregated);
             }
             catch (Exception ex)
             {
-                // Return detailed error in response for easier debugging
-                return StatusCode(500, new { error = "Error fetching exam results", details = ex.Message, stack = ex.StackTrace });
+                return StatusCode(500, new { error = "Error fetching aggregated results", details = ex.Message, inner = ex.InnerException?.Message });
             }
+        }
+
+        private string GetOverallGrade(decimal percentage)
+        {
+            if (percentage >= 90) return "A+";
+            if (percentage >= 80) return "A";
+            if (percentage >= 70) return "B";
+            if (percentage >= 60) return "C";
+            if (percentage >= 50) return "D";
+            return "F";
         }
 
         [HttpGet("student/{studentId}/exam/{examId}")]
@@ -159,6 +203,7 @@ namespace SchoolApiService.Controllers
                     .Where(sd => sd.StudentId == studentId)
                     .Include(sd => sd.Student)
                     .Include(sd => sd.MarkEntry)
+                        .ThenInclude(me => me.Subject)
                     .AsNoTracking()
                     .ToListAsync();
 
@@ -173,25 +218,20 @@ namespace SchoolApiService.Controllers
                 }
 
                 // STEP 3: MAP TO SAFE TYPES MANUALLY
-                var subjects = new List<object>();
-                foreach (var sd in filteredMarks)
-                {
-                    subjects.Add(new
-                    {
-                        SubjectName = "Score Record", // Simple string for now
-                        TotalMarks = 100,             // Simple int
-                        ObtainedMarks = sd.ObtainedScore ?? 0,
-                        Grade = "N/A",                // Simple string
-                        Status = "Passed"              // Simple string
-                    });
-                }
-
                 var result = new
                 {
-                    StudentId = studentId,
-                    StudentName = filteredMarks.First()?.Student?.StudentName ?? "Student " + studentId,
-                    ExamId = examId,
-                    Subjects = subjects
+                    studentId = studentId,
+                    studentName = filteredMarks.FirstOrDefault()?.Student?.StudentName ?? filteredMarks.FirstOrDefault()?.StudentName ?? "N/A",
+                    rollNo = filteredMarks.FirstOrDefault()?.Student?.AdmissionNo?.ToString(),
+                    examId = examId,
+                    subjects = filteredMarks.Select(sd => new
+                    {
+                        subjectName = sd.MarkEntry?.Subject?.SubjectName ?? "N/A",
+                        totalMarks = sd.MarkEntry?.TotalMarks ?? 0,
+                        obtainedMarks = sd.ObtainedScore ?? 0,
+                        grade = sd.Grade ?? "—",
+                        status = sd.PassStatus?.ToString() ?? "Passed"
+                    }).ToList()
                 };
 
                 return Ok(result);
