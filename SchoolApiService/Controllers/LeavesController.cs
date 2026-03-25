@@ -14,13 +14,29 @@ namespace SchoolApiService.Controllers
         private readonly SchoolDbContext _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Leave>>> GetLeaves()
+        public async Task<ActionResult> GetLeaves()
         {
-            return await _context.Leaves
-                .Include(l => l.Staff)
-                .Include(l => l.ApprovedBy)
+            var leaves = await _context.Leaves
+                .AsNoTracking()
                 .OrderByDescending(l => l.AppliedDate)
+                .Select(l => new
+                {
+                    l.LeaveId,
+                    l.StaffId,
+                    Staff = l.Staff != null ? new { l.Staff.StaffName, l.Staff.Designation } : null,
+                    l.LeaveType,
+                    l.StartDate,
+                    l.EndDate,
+                    l.Reason,
+                    l.Status,
+                    l.AppliedDate,
+                    l.ApprovedByStaffId,
+                    ApprovedBy = l.ApprovedBy != null ? new { l.ApprovedBy.StaffName } : null,
+                    l.AdminRemarks
+                })
                 .ToListAsync();
+
+            return Ok(leaves);
         }
 
         [HttpGet("{id}")]
@@ -40,13 +56,29 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet("staff/{staffId}")]
-        public async Task<ActionResult<IEnumerable<Leave>>> GetStaffLeaves(int staffId)
+        public async Task<ActionResult> GetStaffLeaves(int staffId)
         {
-            return await _context.Leaves
-                .Include(l => l.ApprovedBy)
+            var leaves = await _context.Leaves
+                .AsNoTracking()
                 .Where(l => l.StaffId == staffId)
                 .OrderByDescending(l => l.AppliedDate)
+                .Select(l => new
+                {
+                    l.LeaveId,
+                    l.StaffId,
+                    l.LeaveType,
+                    l.StartDate,
+                    l.EndDate,
+                    l.Reason,
+                    l.Status,
+                    l.AppliedDate,
+                    l.ApprovedByStaffId,
+                    ApprovedBy = l.ApprovedBy != null ? new { l.ApprovedBy.StaffName } : null,
+                    l.AdminRemarks
+                })
                 .ToListAsync();
+
+            return Ok(leaves);
         }
 
         [HttpPost]
@@ -136,3 +168,8 @@ namespace SchoolApiService.Controllers
         public string? Remarks { get; set; }
     }
 }
+
+
+
+
+
