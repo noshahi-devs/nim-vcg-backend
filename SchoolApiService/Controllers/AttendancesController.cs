@@ -274,30 +274,33 @@ namespace SchoolApiService.Controllers
         [HttpGet("Report/Class/{classId}")]
         public async Task<ActionResult> GetClassWiseReport(int classId, [FromQuery] DateTime date)
         {
-            // Find students in this class
-            var students = await _context.dbsStudent
+            var nextDate = date.Date.AddDays(1);
+            var startDate = date.Date;
+
+            var report = await _context.dbsStudent
+                .AsNoTracking()
                 .Where(s => s.StandardId == classId)
+                .Select(s => new
+                {
+                    StudentId = s.StudentId,
+                    StudentName = s.StudentName,
+                    RollNo = s.EnrollmentNo,
+                    Attendance = _context.dbsAttendance
+                        .Where(a => a.Type == AttendanceType.Student &&
+                                    a.AttendanceIdentificationNumber == s.StudentId &&
+                                    a.Date >= startDate && a.Date < nextDate)
+                        .Select(a => new { a.IsPresent })
+                        .FirstOrDefault()
+                })
+                .Select(x => new
+                {
+                    x.StudentId,
+                    x.StudentName,
+                    x.RollNo,
+                    IsPresent = x.Attendance != null ? x.Attendance.IsPresent : false,
+                    Status = x.Attendance != null ? (x.Attendance.IsPresent ? "Present" : "Absent") : "Unmarked"
+                })
                 .ToListAsync();
-
-            if (!students.Any()) return Ok(new List<object>());
-
-            var studentIds = students.Select(s => s.StudentId).ToList();
-
-            // Get attendance for these students on this date
-            var attendances = await _context.dbsAttendance
-                .Where(a => a.Type == AttendanceType.Student && 
-                            studentIds.Contains(a.AttendanceIdentificationNumber) &&
-                            a.Date.Date == date.Date)
-                .ToListAsync();
-
-            var report = students.Select(s => new {
-                StudentId = s.StudentId,
-                StudentName = s.StudentName,
-                RollNo = s.EnrollmentNo,
-                IsPresent = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StudentId)?.IsPresent ?? false,
-                Status = attendances.Any(a => a.AttendanceIdentificationNumber == s.StudentId) ? 
-                         (attendances.First(a => a.AttendanceIdentificationNumber == s.StudentId).IsPresent ? "Present" : "Absent") : "Unmarked"
-            });
 
             return Ok(report);
         }
@@ -343,27 +346,33 @@ namespace SchoolApiService.Controllers
         [HttpGet("Report/StaffDaily")]
         public async Task<ActionResult> GetDailyStaffReport([FromQuery] DateTime date)
         {
-            var staffList = await _context.dbsStaff.ToListAsync();
+            var nextDate = date.Date.AddDays(1);
+            var startDate = date.Date;
 
-            if (!staffList.Any()) return Ok(new List<object>());
-
-            var staffIds = staffList.Select(s => s.StaffId).ToList();
-
-            var attendances = await _context.dbsAttendance
-                .Where(a => a.Type == AttendanceType.Staff && 
-                            staffIds.Contains(a.AttendanceIdentificationNumber) &&
-                            a.Date.Date == date.Date)
+            var report = await _context.dbsStaff
+                .AsNoTracking()
+                .Select(s => new
+                {
+                    StaffId = s.StaffId,
+                    StaffName = s.StaffName,
+                    Designation = s.Designation,
+                    Attendance = _context.dbsAttendance
+                        .Where(a => a.Type == AttendanceType.Staff &&
+                                    a.AttendanceIdentificationNumber == s.StaffId &&
+                                    a.Date >= startDate && a.Date < nextDate)
+                        .Select(a => new { a.IsPresent, a.Description })
+                        .FirstOrDefault()
+                })
+                .Select(x => new
+                {
+                    x.StaffId,
+                    x.StaffName,
+                    Designation = x.Designation.ToString(),
+                    IsPresent = x.Attendance != null ? x.Attendance.IsPresent : false,
+                    Status = x.Attendance != null ? (x.Attendance.IsPresent ? "Present" : "Absent") : "",
+                    Remarks = x.Attendance != null ? (x.Attendance.Description ?? "") : ""
+                })
                 .ToListAsync();
-
-            var report = staffList.Select(s => new {
-                StaffId = s.StaffId,
-                StaffName = s.StaffName,
-                Designation = s.Designation,
-                IsPresent = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StaffId)?.IsPresent ?? false,
-                Status = attendances.Any(a => a.AttendanceIdentificationNumber == s.StaffId) ? 
-                         (attendances.First(a => a.AttendanceIdentificationNumber == s.StaffId).IsPresent ? "Present" : "Absent") : "",
-                Remarks = attendances.FirstOrDefault(a => a.AttendanceIdentificationNumber == s.StaffId)?.Description ?? ""
-            });
 
             return Ok(report);
         }
