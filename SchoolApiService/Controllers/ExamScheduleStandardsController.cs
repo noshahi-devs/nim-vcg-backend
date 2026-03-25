@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -94,148 +94,200 @@ namespace SchoolApiService.Controllers
                 return BadRequest(ModelState);
             }
 
-            using (var transaction = _context.Database.BeginTransaction())
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                try
+                using (var transaction = _context.Database.BeginTransaction())
                 {
-                    var existingExamScheduleStandard = await _context.dbsExamScheduleStandard
-                        .Include(es => es.ExamSubjects)
-                        .FirstOrDefaultAsync(es => es.ExamScheduleStandardId == id);
-
-                    if (existingExamScheduleStandard == null)
+                    try
                     {
-                        return NotFound("Exam schedule standard Id not found.");
+                        var existingExamScheduleStandard = await _context.dbsExamScheduleStandard
+                            .Include(es => es.ExamSubjects)
+                            .FirstOrDefaultAsync(es => es.ExamScheduleStandardId == id);
+
+                        if (existingExamScheduleStandard == null)
+                        {
+                            return NotFound("Exam schedule standard Id not found.") as IActionResult;
+                        }
+
+                        // Existence Checks for updated values
+                        var scheduleExists = await _context.dbsExamSchedule.AnyAsync(s => s.ExamScheduleId == request.ExamScheduleId);
+                        if (!scheduleExists) return BadRequest($"Exam Schedule with ID {request.ExamScheduleId} does not exist.") as IActionResult;
+
+                        var standardExists = await _context.dbsStandard.AnyAsync(s => s.StandardId == request.StandardId);
+                        if (!standardExists) return BadRequest($"Standard with ID {request.StandardId} does not exist.") as IActionResult;
+
+                        // Update ExamScheduleId if needed
+                        if (existingExamScheduleStandard.ExamScheduleId != request.ExamScheduleId)
+                        {
+                            existingExamScheduleStandard.ExamScheduleId = request.ExamScheduleId;
+                        }
+
+                        // Update StandardId if needed
+                        if (existingExamScheduleStandard.StandardId != request.StandardId)
+                        {
+                            existingExamScheduleStandard.StandardId = request.StandardId;
+                            _context.dbsExamSubject.RemoveRange(existingExamScheduleStandard.ExamSubjects);
+                        }
+
+                        // Update or Add ExamSubjects
+                        if (request.ExamSubjects != null)
+                        {
+                            foreach (var examSubject in request.ExamSubjects)
+                            {
+                                if (existingExamScheduleStandard.StandardId == await _context.dbsSubject
+                                    .Where(s => s.SubjectId == examSubject.SubjectId)
+                                    .Select(s => s.StandardId)
+                                    .SingleOrDefaultAsync())
+                                {
+                                    DateTime? startTime = null;
+                                    if (!string.IsNullOrEmpty(examSubject.ExamStartTime) && DateTime.TryParse(examSubject.ExamStartTime, out DateTime st))
+                                        startTime = st;
+
+                                    DateTime? endTime = null;
+                                    if (!string.IsNullOrEmpty(examSubject.ExamEndTime) && DateTime.TryParse(examSubject.ExamEndTime, out DateTime et))
+                                        endTime = et;
+
+                                    var existingExamSubject = existingExamScheduleStandard.ExamSubjects.FirstOrDefault(es => es.SubjectId == examSubject.SubjectId);
+
+                                    if (existingExamSubject != null)
+                                    {
+                                        existingExamSubject.ExamDate = examSubject.ExamDate;
+                                        existingExamSubject.ExamStartTime = startTime;
+                                        existingExamSubject.ExamEndTime = endTime;
+                                        existingExamSubject.ExamTypeId = examSubject.ExamTypeId;
+                                    }
+                                    else
+                                    {
+                                        existingExamScheduleStandard.ExamSubjects.Add(new ExamSubject
+                                        {
+                                            ExamDate = examSubject.ExamDate,
+                                            ExamStartTime = startTime,
+                                            ExamEndTime = endTime,
+                                            SubjectId = examSubject.SubjectId,
+                                            ExamScheduleStandardId = existingExamScheduleStandard.ExamScheduleStandardId,
+                                            ExamTypeId = examSubject.ExamTypeId,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        return NoContent() as IActionResult;
                     }
-
-                    // Update ExamScheduleId if needed
-                    if (existingExamScheduleStandard.ExamScheduleId != request.ExamScheduleId)
+                    catch (Exception ex)
                     {
-                        existingExamScheduleStandard.ExamScheduleId = request.ExamScheduleId;
+                        await transaction.RollbackAsync();
+                        var errorMsg = ex.Message;
+                        if (ex.InnerException != null) errorMsg += " | Inner: " + ex.InnerException.Message;
+                        return StatusCode(500, "Error updating: " + errorMsg) as IActionResult;
                     }
+                }
+            });
+        }
 
-                    // Update StandardId if needed
-                    if (existingExamScheduleStandard.StandardId != request.StandardId)
+
+        [HttpPost]
+        public async Task<IActionResult> PostExamScheduleStandard(CreateExamScheduleStandardVM request)
+        {
+            if (request.ExamScheduleId <= 0 || request.StandardId <= 0)
+            {
+                return BadRequest("Exam Schedule and Standard must be selected.");
+            }
+
+            if (request.ExamSubjects == null || !request.ExamSubjects.Any())
+            {
+                return BadRequest("At least one exam subject is required.");
+            }
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    try
                     {
-                        existingExamScheduleStandard.StandardId = request.StandardId;
+                        // Existence Checks
+                        var scheduleExists = await _context.dbsExamSchedule.AnyAsync(s => s.ExamScheduleId == request.ExamScheduleId);
+                        if (!scheduleExists) return BadRequest($"Exam Schedule with ID {request.ExamScheduleId} does not exist.") as IActionResult;
 
-                        // Remove existing ExamSubjects if StandardId is changed
+                        var standardExists = await _context.dbsStandard.AnyAsync(s => s.StandardId == request.StandardId);
+                        if (!standardExists) return BadRequest($"Standard with ID {request.StandardId} does not exist.") as IActionResult;
 
-                        _context.dbsExamSubject.RemoveRange(existingExamScheduleStandard.ExamSubjects);
-                    }
+                        if (
+                                await _context.dbsExamScheduleStandard.AnyAsync(it =>
+                                it.ExamScheduleId == request.ExamScheduleId &&
+                                it.StandardId == request.StandardId
+                                )
+                            )
+                        {
+                            return BadRequest("Exam schedule standard already exists for this selection.") as IActionResult;
+                        }
 
-                    // Update or Add ExamSubjects
-                    if (request.ExamSubjects != null)
-                    {
+                        var examScheduleStandard = new ExamScheduleStandard
+                        {
+                            ExamScheduleId = request.ExamScheduleId,
+                            StandardId = request.StandardId
+                        };
+
+                        await _context.dbsExamScheduleStandard.AddAsync(examScheduleStandard);
+                        await _context.SaveChangesAsync();
+
+                        List<ExamSubject> examSubjects = new List<ExamSubject>();
                         foreach (var examSubject in request.ExamSubjects)
                         {
-                            if (existingExamScheduleStandard.StandardId == await _context.dbsSubject
-                                .Where(s => s.SubjectId == examSubject.SubjectId)
-                                .Select(s => s.StandardId)
-                                .SingleOrDefaultAsync())
+                            if (examSubject.SubjectId > 0 && examSubject.ExamTypeId > 0)
                             {
-                                DateTime.TryParse(examSubject.ExamStartTime, out DateTime startTime);
-                                DateTime.TryParse(examSubject.ExamEndTime, out DateTime endTime);
+                                var subjectStandardId = await _context.dbsSubject.Where(it => it.SubjectId == examSubject.SubjectId).Select(it => it.StandardId).SingleOrDefaultAsync();
 
-                                var existingExamSubject = existingExamScheduleStandard.ExamSubjects.FirstOrDefault(es => es.SubjectId == examSubject.SubjectId);
-
-                                if (existingExamSubject != null)
+                                if (request.StandardId == subjectStandardId)
                                 {
+                                    DateTime? startTime = null;
+                                    if (!string.IsNullOrEmpty(examSubject.ExamStartTime) && DateTime.TryParse(examSubject.ExamStartTime, out DateTime st))
+                                        startTime = st;
 
-                                    existingExamSubject.ExamDate = examSubject.ExamDate;
-                                    existingExamSubject.ExamStartTime = startTime;
-                                    existingExamSubject.ExamEndTime = endTime;
-                                    existingExamSubject.ExamTypeId = examSubject.ExamTypeId;
-                                }
-                                else
-                                {
-                                    existingExamScheduleStandard.ExamSubjects.Add(new ExamSubject
+                                    DateTime? endTime = null;
+                                    if (!string.IsNullOrEmpty(examSubject.ExamEndTime) && DateTime.TryParse(examSubject.ExamEndTime, out DateTime et))
+                                        endTime = et;
+
+                                    examSubjects.Add(new ExamSubject
                                     {
                                         ExamDate = examSubject.ExamDate,
                                         ExamStartTime = startTime,
                                         ExamEndTime = endTime,
                                         SubjectId = examSubject.SubjectId,
-                                        ExamScheduleStandardId = existingExamScheduleStandard.ExamScheduleStandardId,
+                                        ExamScheduleStandardId = examScheduleStandard.ExamScheduleStandardId,
                                         ExamTypeId = examSubject.ExamTypeId,
                                     });
                                 }
                             }
                         }
-                    }
 
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return NoContent();
-                }
-                catch (Exception)
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-            }
-        }
-
-
-        // POST: api/ExamScheduleStandards
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task PostExamScheduleStandard(CreateExamScheduleStandardVM request)
-        {
-            using (var transaction = _context.Database.BeginTransaction())
-            {
-                try
-                {
-                    if (
-                            await _context.dbsExamScheduleStandard.AnyAsync(it =>
-                            it.ExamScheduleId == request.ExamScheduleId &&
-                            it.StandardId == request.StandardId
-                            )
-                        ) throw new Exception("Exam schedule standard already exist.");
-
-                    var examScheduleStandard = new ExamScheduleStandard
-                    {
-
-
-                        ExamScheduleId = request.ExamScheduleId,
-                        StandardId = request.StandardId
-                    };
-
-                    await _context.dbsExamScheduleStandard.AddAsync(examScheduleStandard);
-                    await _context.SaveChangesAsync();
-
-                    List<ExamSubject> examSubjects = [];
-                    foreach (var examSubject in request.ExamSubjects)
-                    {
-
-                        if (request.StandardId == await _context.dbsSubject.Where(it => it.SubjectId == examSubject.SubjectId).Select(it => it.StandardId).SingleOrDefaultAsync())
+                        if (examSubjects.Count > 0)
                         {
-                            DateTime.TryParse(examSubject.ExamStartTime, out DateTime startTime);
-                            DateTime.TryParse(examSubject.ExamEndTime, out DateTime endTime);
-
-                            examSubjects.Add(new ExamSubject
-                            {
-                                ExamDate = examSubject.ExamDate,
-                                ExamStartTime = startTime,
-                                ExamEndTime = endTime,
-                                SubjectId = examSubject.SubjectId,
-                                ExamScheduleStandardId = examScheduleStandard.ExamScheduleStandardId,
-                                ExamTypeId = examSubject.ExamTypeId,
-                            });
+                            await _context.dbsExamSubject.AddRangeAsync(examSubjects);
+                            await _context.SaveChangesAsync();
                         }
+                        else
+                        {
+                            await transaction.RollbackAsync();
+                            return BadRequest("No valid subjects were provided for the selected standard.") as IActionResult;
+                        }
+
+                        await transaction.CommitAsync();
+                        return Ok() as IActionResult;
                     }
-                    if (examSubjects.Count > 0)
+                    catch (Exception ex)
                     {
-                        await _context.dbsExamSubject.AddRangeAsync(examSubjects);
-                        await _context.SaveChangesAsync();
+                        await transaction.RollbackAsync();
+                        var errorMsg = ex.Message;
+                        if (ex.InnerException != null) errorMsg += " | Inner: " + ex.InnerException.Message;
+                        return StatusCode(500, "Error: " + errorMsg) as IActionResult;
                     }
-                    await transaction.CommitAsync();
                 }
-                catch (Exception)
-                {
-                    //await transaction.RollbackAsync();
-                    throw;
-                }
-            }
+            });
         }
 
         // DELETE: api/ExamScheduleStandards/5
