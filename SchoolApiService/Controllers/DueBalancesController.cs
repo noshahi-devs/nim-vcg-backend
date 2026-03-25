@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,14 +21,38 @@ namespace SchoolApiService.Controllers
             _context = context;
         }
 
-        // GET: api/DueBalances
+        // GET: api/DueBalances?skip=0&take=2000
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DueBalance>>> GetdbsDueBalance()
+        public async Task<ActionResult<IEnumerable<object>>> GetdbsDueBalance([FromQuery] int skip = 0, [FromQuery] int take = 2000)
         {
-            return await _context.dbsDueBalance
-                .Include(d => d.Student)
-                .ThenInclude(s => s.Standard)
+            var result = await _context.dbsDueBalance
+                .AsNoTracking()
+                .Where(d => d.DueBalanceAmount > 0)
+                .OrderByDescending(d => d.LastUpdate)
+                .Skip(skip)
+                .Take(take)
+                .Select(d => new
+                {
+                    dueBalanceId = d.DueBalanceId,
+                    studentId = d.StudentId,
+                    dueBalanceAmount = d.DueBalanceAmount,
+                    lastUpdate = d.LastUpdate,
+                    student = d.Student == null ? null : new
+                    {
+                        studentId = d.Student.StudentId,
+                        studentName = d.Student.StudentName,
+                        enrollmentNo = d.Student.EnrollmentNo,
+                        standardId = d.Student.StandardId,
+                        standard = d.Student.Standard == null ? null : new
+                        {
+                            standardId = d.Student.Standard.StandardId,
+                            standardName = d.Student.Standard.StandardName
+                        }
+                    }
+                })
                 .ToListAsync();
+
+            return Ok(result);
         }
 
         // GET: api/DueBalances/5

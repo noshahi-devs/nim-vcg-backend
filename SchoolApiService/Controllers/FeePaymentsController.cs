@@ -23,13 +23,35 @@ namespace SchoolApiService.Controllers
             _notificationService = notificationService;
         }
         [HttpGet]
-        public async Task<IActionResult> GetFeePayments()
+        public async Task<IActionResult> GetFeePayments([FromQuery] int skip = 0, [FromQuery] int take = 2000)
         {
             try
             {
                 var feePayments = await _context.dbsFeePayment
-
-                    .Include(fp => fp.FeePaymentDetails)  // Include related FeePaymentDetails entities if needed
+                    .AsNoTracking()
+                    .OrderByDescending(fp => fp.PaymentDate ?? DateTime.MinValue)
+                    .Skip(skip)
+                    .Take(take)
+                    .Select(fp => new 
+                    {
+                        fp.FeePaymentId,
+                        fp.StudentId,
+                        fp.StudentName,
+                        fp.TotalFeeAmount,
+                        fp.Discount,
+                        fp.AmountAfterDiscount,
+                        fp.PreviousDue,
+                        fp.TotalAmount,
+                        fp.AmountPaid,
+                        fp.AmountRemaining,
+                        fp.PaymentDate,
+                        FeePaymentDetails = fp.FeePaymentDetails.Select(d => new 
+                        {
+                            d.FeePaymentDetailId,
+                            d.FeeAmount,
+                            d.FeeTypeName
+                        })
+                    })
                     .ToListAsync();
 
                 return Ok(feePayments);

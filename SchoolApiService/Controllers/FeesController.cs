@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
@@ -25,7 +25,7 @@ namespace SchoolApiService.Controllers
             try
             {
                 var fees = await _context.fees
-
+                    .AsNoTracking()
                     .Include(fp => fp.feeType)
                     .Include(fp => fp.standard)
                     .ToListAsync();

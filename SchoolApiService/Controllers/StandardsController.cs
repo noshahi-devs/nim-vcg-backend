@@ -23,13 +23,28 @@ namespace SchoolApiService.Controllers
 
         // GET: api/Standards
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Standard>>> GetdbsStandard()
+        public async Task<ActionResult> GetdbsStandard()
         {
-            return await _context.dbsStandard
-                .Include(m => m.Subjects)
-                .Include(m => m.ExamScheduleStandards)
-                .Include(m => m.Students)
+            var standards = await _context.dbsStandard
+                .AsNoTracking()
+                .Select(s => new
+                {
+                    s.StandardId,
+                    s.StandardName,
+                    s.StandardCode,
+                    s.GradeLevel,
+                    s.RoomNo,
+                    s.StandardCapacity,
+                    s.Remarks,
+                    s.Status,
+                    TotalStudents = s.Students.Count(),
+                    TotalSubjects = s.Subjects.Count(),
+                    TotalSections = s.Sections.Count(),
+                    Subjects = s.Subjects.Select(sub => new { sub.SubjectId, sub.SubjectName }).ToList()
+                })
                 .ToListAsync();
+
+            return Ok(standards);
         }
 
         // GET: api/Standards/5

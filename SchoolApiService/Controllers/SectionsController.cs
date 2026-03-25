@@ -19,9 +19,23 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Section>>> GetSections()
+        public async Task<ActionResult> GetSections()
         {
-            return await _context.Sections.Include(s => s.ClassTeacher).ToListAsync();
+            var sections = await _context.Sections
+                .Select(s => new
+                {
+                    s.SectionId,
+                    s.SectionName,
+                    s.ClassName,
+                    s.SectionCode,
+                    s.StaffId,
+                    ClassTeacherName = s.ClassTeacher != null ? s.ClassTeacher.StaffName : "No Teacher Assigned",
+                    s.RoomNo,
+                    s.Capacity
+                })
+                .ToListAsync();
+
+            return Ok(sections);
         }
 
         [HttpGet("{id}")]

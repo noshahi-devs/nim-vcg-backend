@@ -30,6 +30,49 @@ namespace SchoolApiService.Controllers
             public int NextAcademicYearId { get; set; }
         }
 
+        public class StudentDto
+        {
+            public int StudentId { get; set; }
+            public int? AdmissionNo { get; set; }
+            public int? EnrollmentNo { get; set; }
+            public int UniqueStudentAttendanceNumber { get; set; }
+            public string? StudentName { get; set; }
+            public string? ImagePath { get; set; }
+            public DateTime StudentDOB { get; set; }
+            public string? StudentGender { get; set; }
+            public string? StudentReligion { get; set; }
+            public string? StudentBloodGroup { get; set; }
+            public string? StudentNationality { get; set; }
+            public string? StudentNIDNumber { get; set; }
+            public string? StudentContactNumber1 { get; set; }
+            public string? StudentContactNumber2 { get; set; }
+            public string? StudentEmail { get; set; }
+            public string? ParentEmail { get; set; }
+            public string? PermanentAddress { get; set; }
+            public string? TemporaryAddress { get; set; }
+            public string? FatherName { get; set; }
+            public string? FatherNID { get; set; }
+            public string? FatherContactNumber { get; set; }
+            public string? MotherName { get; set; }
+            public string? MotherNID { get; set; }
+            public string? MotherContactNumber { get; set; }
+            public string? LocalGuardianName { get; set; }
+            public string? LocalGuardianContactNumber { get; set; }
+            public int? StandardId { get; set; }
+            public object? Standard { get; set; }
+            public string? Section { get; set; }
+            public string? GuardianPhone { get; set; }
+            public string? PreviousSchool { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? AdmissionDate { get; set; }
+            public string? Status { get; set; }
+            public int? SectionId { get; set; }
+            public int? AcademicYearId { get; set; }
+            public int? CampusId { get; set; }
+            public int? ParentId { get; set; }
+            public string? UserId { get; set; }
+        }
+
         public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
@@ -39,7 +82,7 @@ namespace SchoolApiService.Controllers
 
         // GET: api/Students
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents([FromQuery] int? academicYearId = null)
+        public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents([FromQuery] int? academicYearId = null, [FromQuery] int skip = 0, [FromQuery] int take = 200)
         {
             var query = _context.dbsStudent.AsQueryable();
 
@@ -49,17 +92,104 @@ namespace SchoolApiService.Controllers
             }
 
             return await query
-                .Include(s => s.Standard)
+                .AsNoTracking()
+                .OrderByDescending(s => s.StudentId)
+                .Skip(skip)
+                .Take(take)
+                .Select(s => new StudentDto
+                {
+                    StudentId = s.StudentId,
+                    AdmissionNo = s.AdmissionNo,
+                    EnrollmentNo = s.EnrollmentNo,
+                    UniqueStudentAttendanceNumber = s.UniqueStudentAttendanceNumber,
+                    StudentName = s.StudentName,
+                    ImagePath = null, // Excluded from list endpoint to prevent massive base64 download bloat
+                    StudentDOB = s.StudentDOB,
+                    StudentGender = s.StudentGender.HasValue ? s.StudentGender.Value.ToString() : null,
+                    StudentReligion = s.StudentReligion,
+                    StudentBloodGroup = s.StudentBloodGroup,
+                    StudentNationality = s.StudentNationality,
+                    StudentNIDNumber = s.StudentNIDNumber,
+                    StudentContactNumber1 = s.StudentContactNumber1,
+                    StudentContactNumber2 = s.StudentContactNumber2,
+                    StudentEmail = s.StudentEmail,
+                    ParentEmail = s.ParentEmail,
+                    PermanentAddress = s.PermanentAddress,
+                    TemporaryAddress = s.TemporaryAddress,
+                    FatherName = s.FatherName,
+                    FatherNID = s.FatherNID,
+                    FatherContactNumber = s.FatherContactNumber,
+                    MotherName = s.MotherName,
+                    MotherNID = s.MotherNID,
+                    MotherContactNumber = s.MotherContactNumber,
+                    LocalGuardianName = s.LocalGuardianName,
+                    LocalGuardianContactNumber = s.LocalGuardianContactNumber,
+                    StandardId = s.StandardId,
+                    Standard = s.Standard != null ? new { s.Standard.StandardName } : null,
+                    Section = s.Section,
+                    GuardianPhone = s.GuardianPhone,
+                    PreviousSchool = s.PreviousSchool,
+                    CreatedAt = s.CreatedAt,
+                    AdmissionDate = s.AdmissionDate,
+                    Status = s.Status,
+                    SectionId = s.SectionId,
+                    AcademicYearId = s.AcademicYearId,
+                    CampusId = s.CampusId,
+                    ParentId = s.ParentId,
+                    UserId = s.UserId
+                })
                 .ToListAsync();
         }
 
         // GET: api/Students/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Student>> GetStudent(int id)
+        public async Task<ActionResult<StudentDto>> GetStudent(int id)
         {
             var student = await _context.dbsStudent
-                .Include(s => s.Standard)
-                .FirstOrDefaultAsync(s => s.StudentId == id);
+                .Where(s => s.StudentId == id)
+                .Select(s => new StudentDto
+                {
+                    StudentId = s.StudentId,
+                    AdmissionNo = s.AdmissionNo,
+                    EnrollmentNo = s.EnrollmentNo,
+                    UniqueStudentAttendanceNumber = s.UniqueStudentAttendanceNumber,
+                    StudentName = s.StudentName,
+                    ImagePath = s.ImagePath,
+                    StudentDOB = s.StudentDOB,
+                    StudentGender = s.StudentGender.HasValue ? s.StudentGender.Value.ToString() : null,
+                    StudentReligion = s.StudentReligion,
+                    StudentBloodGroup = s.StudentBloodGroup,
+                    StudentNationality = s.StudentNationality,
+                    StudentNIDNumber = s.StudentNIDNumber,
+                    StudentContactNumber1 = s.StudentContactNumber1,
+                    StudentContactNumber2 = s.StudentContactNumber2,
+                    StudentEmail = s.StudentEmail,
+                    ParentEmail = s.ParentEmail,
+                    PermanentAddress = s.PermanentAddress,
+                    TemporaryAddress = s.TemporaryAddress,
+                    FatherName = s.FatherName,
+                    FatherNID = s.FatherNID,
+                    FatherContactNumber = s.FatherContactNumber,
+                    MotherName = s.MotherName,
+                    MotherNID = s.MotherNID,
+                    MotherContactNumber = s.MotherContactNumber,
+                    LocalGuardianName = s.LocalGuardianName,
+                    LocalGuardianContactNumber = s.LocalGuardianContactNumber,
+                    StandardId = s.StandardId,
+                    Standard = s.Standard != null ? new { s.Standard.StandardName } : null,
+                    Section = s.Section,
+                    GuardianPhone = s.GuardianPhone,
+                    PreviousSchool = s.PreviousSchool,
+                    CreatedAt = s.CreatedAt,
+                    AdmissionDate = s.AdmissionDate,
+                    Status = s.Status,
+                    SectionId = s.SectionId,
+                    AcademicYearId = s.AcademicYearId,
+                    CampusId = s.CampusId,
+                    ParentId = s.ParentId,
+                    UserId = s.UserId
+                })
+                .FirstOrDefaultAsync();
 
             if (student == null)
             {

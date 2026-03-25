@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
@@ -21,7 +21,7 @@ namespace SchoolApiService.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AcademicMonth>>> GetdbsAcademicMonths()
         {
-            return await _context.dbsAcademicMonths.ToListAsync();
+            return await _context.dbsAcademicMonths.AsNoTracking().ToListAsync();
         }
 
         // GET: api/AcademicMonths/5

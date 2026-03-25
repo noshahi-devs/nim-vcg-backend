@@ -19,12 +19,12 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("CampusId")]
         public Campus? Campus { get; set; }
         public int? StudentId { get; set; }
-        public decimal TotalFeeAmount { get; set; }
-        public decimal Waver { get; set; } = 0;
-        public decimal PreviousDue { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal AmountPaid { get; set; }
-        public decimal AmountRemaining { get; set; }
+        public decimal? TotalFeeAmount { get; set; }
+        public decimal? Waver { get; set; } = 0;
+        public decimal? PreviousDue { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public decimal? AmountPaid { get; set; }
+        public decimal? AmountRemaining { get; set; }
         public DateTime PaymentDate { get; set; } = DateTime.Now;
 
         public Student? Student { get; set; }
@@ -34,5 +34,14 @@ namespace SchoolApp.Models.DataModels
 
         public IList<PaymentDetail>? PaymentDetails { get; set; }
         public IList<DueBalance>? dueBalances { get; set; }
+        
+        [NotMapped]
+        public string? PaymentMethod { get; set; }
+        [NotMapped]
+        public string? TransactionId { get; set; }
+        [NotMapped]
+        public bool? SendSms { get; set; }
+        [NotMapped]
+        public bool? PrintReceipt { get; set; }
     }
 }

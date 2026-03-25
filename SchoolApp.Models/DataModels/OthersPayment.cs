@@ -19,10 +19,10 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("CampusId")]
         public Campus? Campus { get; set; }
         public int? StudentId { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal AmountPaid { get; set; }
-        public decimal AmountRemaining { get; set; }
-        public decimal Waver { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public decimal? AmountPaid { get; set; }
+        public decimal? AmountRemaining { get; set; }
+        public decimal? Waver { get; set; }
         public DateTime PaymentDate { get; set; } = DateTime.Now;
 
         public Student? Student { get; set; }

@@ -21,14 +21,42 @@ namespace SchoolApp.DAL.Controllers
 
         // GET: api/SubjectAssignments
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SubjectAssignment>>> GetSubjectAssignments()
+        public async Task<IActionResult> GetSubjectAssignments([FromQuery] int skip = 0, [FromQuery] int take = 2000)
         {
-            return await _context.SubjectAssignments
-                .Include(sa => sa.Staff)
-                .Include(sa => sa.Subject)
-                    .ThenInclude(s => s.Standard)
-                .Include(sa => sa.Section)
+            var assignments = await _context.SubjectAssignments
+                .AsNoTracking()
+                .OrderByDescending(sa => sa.SubjectAssignmentId)
+                .Skip(skip)
+                .Take(take)
+                .Select(sa => new
+                {
+                    sa.SubjectAssignmentId,
+                    sa.SubjectId,
+                    Subject = sa.Subject != null ? new 
+                    {
+                        sa.Subject.SubjectId,
+                        sa.Subject.SubjectName,
+                        sa.Subject.SubjectCode,
+                        sa.Subject.StandardId,
+                        Standard = sa.Subject.Standard != null ? new { sa.Subject.Standard.StandardName } : null
+                    } : null,
+                    sa.StaffId,
+                    Staff = sa.Staff != null ? new 
+                    {
+                        sa.Staff.StaffId,
+                        sa.Staff.StaffName,
+                        sa.Staff.Email,
+                        ImagePath = null as string // Exclude Base64 data from List endpoint!
+                    } : null,
+                    sa.SectionId,
+                    Section = sa.Section != null ? new 
+                    {
+                        sa.Section.SectionId,
+                        sa.Section.SectionName
+                    } : null
+                })
                 .ToListAsync();
+            return Ok(assignments);
         }
 
         // GET: api/SubjectAssignments/5

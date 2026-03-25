@@ -46,8 +46,8 @@ namespace SchoolApiService.Controllers
                 .Where(p => p.StudentId == studentId)
                 .ToListAsync();
 
-            decimal totalPaid = feePayments.Sum(p => p.AmountPaid);
-            decimal totalDue = feePayments.Sum(p => p.AmountRemaining);
+            decimal totalPaid = feePayments.Sum(p => p.AmountPaid ?? 0);
+            decimal totalDue = feePayments.Sum(p => p.AmountRemaining ?? 0);
 
             // Marks Stats
             var recentMarks = await _context.dbsMark

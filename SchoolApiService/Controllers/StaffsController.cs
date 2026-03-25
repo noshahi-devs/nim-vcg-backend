@@ -23,14 +23,78 @@ namespace SchoolApiService.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult> GetdbsStaff()
+        public async Task<ActionResult> GetdbsStaff([FromQuery] int skip = 0, [FromQuery] int take = 2000)
         {
             try
             {
                 var staffs = await _context.dbsStaff
-                    .Include(m => m.Department)
-                    .Include(m => m.StaffSalary)
-                    .Include(m => m.StaffExperiences)
+                    .AsNoTracking()
+                    .OrderByDescending(s => s.StaffId)
+                    .Skip(skip)
+                    .Take(take)
+                    .Select(s => new
+                    {
+                        s.StaffId,
+                        s.StaffName,
+                        s.Email,
+                        ImagePath = null as string, // Excluded from list endpoint to prevent massive base64 download bloat
+                        s.UniqueStaffAttendanceNumber,
+                        Gender = s.Gender != null ? s.Gender.ToString() : null,
+                        s.DOB,
+                        s.FatherName,
+                        s.MotherName,
+                        s.CNIC,
+                        s.Experience,
+                        s.TemporaryAddress,
+                        s.PermanentAddress,
+                        s.ContactNumber1,
+                        s.Qualifications,
+                        s.JoiningDate,
+                        Designation = s.Designation != null ? s.Designation.ToString() : null,
+                        s.BankAccountName,
+                        s.BankAccountNumber,
+                        s.BankName,
+                        s.BankBranch,
+                        s.Status,
+                        s.DepartmentId,
+                        Department = s.Department != null ? new { s.Department.DepartmentId, s.Department.DepartmentName } : null,
+                        s.StaffSalaryId,
+                        StaffSalary = s.StaffSalary != null ? new 
+                        { 
+                            s.StaffSalary.StaffSalaryId, 
+                            s.StaffSalary.BasicSalary, 
+                            s.StaffSalary.NetSalary,
+                            s.StaffSalary.SavingFund,
+                            s.StaffSalary.Taxes
+                        } : null,
+                        StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
+                        {
+                            e.StaffExperienceId,
+                            e.CompanyName,
+                            e.Designation,
+                            e.JoiningDate,
+                            e.LeavingDate,
+                            e.Responsibilities,
+                            e.Achievements
+                        }).ToList() : null
+                    })
+                    .ToListAsync();
+
+                return Ok(staffs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Internal error fetching staff list", message = ex.Message, inner = ex.InnerException?.Message });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult> GetStaff(int id)
+        {
+            try
+            {
+                var staff = await _context.dbsStaff
+                    .Where(m => m.StaffId == id)
                     .Select(s => new
                     {
                         s.StaffId,
@@ -56,8 +120,16 @@ namespace SchoolApiService.Controllers
                         s.BankBranch,
                         s.Status,
                         s.DepartmentId,
-                        DepartmentName = s.Department != null ? s.Department.DepartmentName : null,
+                        Department = s.Department != null ? new { s.Department.DepartmentId, s.Department.DepartmentName } : null,
                         s.StaffSalaryId,
+                        StaffSalary = s.StaffSalary != null ? new 
+                        { 
+                            s.StaffSalary.StaffSalaryId, 
+                            s.StaffSalary.BasicSalary, 
+                            s.StaffSalary.NetSalary,
+                            s.StaffSalary.SavingFund,
+                            s.StaffSalary.Taxes
+                        } : null,
                         StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
                         {
                             e.StaffExperienceId,
@@ -69,41 +141,19 @@ namespace SchoolApiService.Controllers
                             e.Achievements
                         }).ToList() : null
                     })
-                    .ToListAsync();
+                    .FirstOrDefaultAsync();
 
-                return Ok(staffs);
+                if (staff == null)
+                {
+                    return NotFound(new { error = "Sorry! No Staff is found. Try next time. Good luck." });
+                }
+
+                return Ok(staff);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Internal error fetching staff list", message = ex.Message, inner = ex.InnerException?.Message });
+                return StatusCode(500, new { error = "Internal error fetching staff details", message = ex.Message, inner = ex.InnerException?.Message });
             }
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Staff>> GetStaff(int id)
-        {
-            var staff = await _context.dbsStaff
-                .Include(m => m.Department)
-                .Include(m => m.StaffSalary)
-                .Include(m => m.StaffExperiences)
-                .FirstOrDefaultAsync(m => m.StaffId == id);
-
-            if (staff == null)
-            {
-                //return NotFound();
-                return NotFound("Sorry! No Staff is found. Try next time. Good luck.");
-            }
-
-            //if(staff.ImagePath != null)
-            //{
-            //    staff.ImageUpload = new ImageUpload()
-            //    {
-            //        ImageData = staff.ImagePath,
-            //        ImageName = staff.StaffName+"'s image"
-            //    };
-            //}
-
-            return staff;
         }
      
 
@@ -113,9 +163,6 @@ namespace SchoolApiService.Controllers
             try
             {
                 var staff = await _context.dbsStaff
-                    .Include(m => m.Department)
-                    .Include(m => m.StaffSalary)
-                    .Include(m => m.StaffExperiences)
                     .Where(m => m.Email == email)
                     .Select(s => new
                     {
@@ -142,8 +189,16 @@ namespace SchoolApiService.Controllers
                         s.BankBranch,
                         s.Status,
                         s.DepartmentId,
-                        DepartmentName = s.Department != null ? s.Department.DepartmentName : null,
+                        Department = s.Department != null ? new { s.Department.DepartmentId, s.Department.DepartmentName } : null,
                         s.StaffSalaryId,
+                        StaffSalary = s.StaffSalary != null ? new 
+                        { 
+                            s.StaffSalary.StaffSalaryId, 
+                            s.StaffSalary.BasicSalary, 
+                            s.StaffSalary.NetSalary,
+                            s.StaffSalary.SavingFund,
+                            s.StaffSalary.Taxes
+                        } : null,
                         StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
                         {
                             e.StaffExperienceId,
