@@ -103,7 +103,7 @@ namespace SchoolApiService.Controllers
                     EnrollmentNo = s.EnrollmentNo,
                     UniqueStudentAttendanceNumber = s.UniqueStudentAttendanceNumber,
                     StudentName = s.StudentName,
-                    ImagePath = null, // Excluded from list endpoint to prevent massive base64 download bloat
+                    ImagePath = s.ImagePath,
                     StudentDOB = s.StudentDOB,
                     StudentGender = s.StudentGender.HasValue ? s.StudentGender.Value.ToString() : null,
                     StudentReligion = s.StudentReligion,

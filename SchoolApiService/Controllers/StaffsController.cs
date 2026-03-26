@@ -37,7 +37,7 @@ namespace SchoolApiService.Controllers
                         s.StaffId,
                         s.StaffName,
                         s.Email,
-                        ImagePath = null as string, // Excluded from list endpoint to prevent massive base64 download bloat
+                        ImagePath = s.ImagePath,
                         s.UniqueStaffAttendanceNumber,
                         Gender = s.Gender != null ? s.Gender.ToString() : null,
                         s.DOB,
