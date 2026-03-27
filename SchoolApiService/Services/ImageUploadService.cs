@@ -64,6 +64,24 @@ namespace SchoolApiService.Services
             }
         }
 
+        public void DeleteOldImage(string? relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath) || !relativePath.StartsWith("/images/")) return;
+
+            try
+            {
+                string fullPath = Path.Combine(hostEnvironment.WebRootPath, relativePath.TrimStart('/'));
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting old image: {ex.Message}");
+            }
+        }
+
 
     }
 }

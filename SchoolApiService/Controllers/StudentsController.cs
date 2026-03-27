@@ -10,6 +10,7 @@ using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
 using Microsoft.AspNetCore.Identity;
 using SchoolApp.Models.DataModels.SecurityModels;
+using SchoolApiService.Services;
 
 namespace SchoolApiService.Controllers
 {
@@ -21,6 +22,7 @@ namespace SchoolApiService.Controllers
         private readonly SchoolDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ImageUploadService _imageService;
 
         public class PromotionRequest
         {
@@ -73,11 +75,12 @@ namespace SchoolApiService.Controllers
             public string? UserId { get; set; }
         }
 
-        public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ImageUploadService imageService)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _imageService = imageService;
         }
 
         // GET: api/Students
@@ -103,7 +106,7 @@ namespace SchoolApiService.Controllers
                     EnrollmentNo = s.EnrollmentNo,
                     UniqueStudentAttendanceNumber = s.UniqueStudentAttendanceNumber,
                     StudentName = s.StudentName,
-                    ImagePath = s.ImagePath,
+                    ImagePath = null, // Excluded from list - prevents Base64 blob serialization hang
                     StudentDOB = s.StudentDOB,
                     StudentGender = s.StudentGender.HasValue ? s.StudentGender.Value.ToString() : null,
                     StudentReligion = s.StudentReligion,
@@ -229,10 +232,21 @@ namespace SchoolApiService.Controllers
                 student.Section = student.SectionObject.SectionName; // keeping fallback copy
             }
 
-            // Check if the ImageUpload is provided
+            // Check if binary image data is provided for upload
             if (student.ImageUpload?.ImageData != null)
             {
-                student.ImagePath = student.ImageUpload?.ImageData;
+                // Delete old file if it exists and we're replacing it
+                if (!string.IsNullOrEmpty(student.ImagePath))
+                {
+                    _imageService.DeleteOldImage(student.ImagePath);
+                }
+
+                // Upload new image and get relative path
+                var path = await _imageService.Upload(student.ImageUpload);
+                if (path != null)
+                {
+                    student.ImagePath = path;
+                }
             }
 
             _context.Entry(student).State = EntityState.Modified;
@@ -289,10 +303,14 @@ namespace SchoolApiService.Controllers
                 student.AcademicYearId = await GetActiveAcademicYearId();
             }
 
-            // Check if the ImageUpload is provided
+            // Check if binary image data is provided for upload
             if (student.ImageUpload?.ImageData != null)
             {
-                student.ImagePath = student.ImageUpload?.ImageData;
+                var path = await _imageService.Upload(student.ImageUpload);
+                if (path != null)
+                {
+                    student.ImagePath = path;
+                }
             }
 
             // Automatically generate UniqueStudentAttendanceNumber

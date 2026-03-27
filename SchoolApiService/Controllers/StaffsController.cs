@@ -17,9 +17,10 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class StaffsController(SchoolDbContext context) : ControllerBase
+    public class StaffsController(SchoolDbContext context, ImageUploadService imageService) : ControllerBase
     {
         private readonly SchoolDbContext _context = context;
+        private readonly ImageUploadService _imageService = imageService;
 
 
         [HttpGet]
@@ -259,9 +260,14 @@ namespace SchoolApiService.Controllers
                 }
             }
 
+            // Check if binary image data is provided for upload
             if (staff.ImageUpload?.ImageData != null)
             {
-                staff.ImagePath = staff.ImageUpload?.ImageData;
+                var path = await _imageService.Upload(staff.ImageUpload);
+                if (path != null)
+                {
+                    staff.ImagePath = path;
+                }
             }
             // Add the StaffExperiences to the context if they are provided
             if (staff.StaffExperiences != null && staff.StaffExperiences.Any())
@@ -359,9 +365,20 @@ namespace SchoolApiService.Controllers
             }
 
 
+            // Check if binary image data is provided for upload
             if (staff.ImageUpload?.ImageData != null)
             {
-                staff.ImagePath = staff.ImageUpload?.ImageData;
+                // Delete old file if it exists and we're replacing it
+                if (!string.IsNullOrEmpty(staff.ImagePath))
+                {
+                    _imageService.DeleteOldImage(staff.ImagePath);
+                }
+
+                var path = await _imageService.Upload(staff.ImageUpload);
+                if (path != null)
+                {
+                    staff.ImagePath = path;
+                }
             }
 
             // Update the StaffExperiences if they are provided
