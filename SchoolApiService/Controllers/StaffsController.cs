@@ -22,9 +22,64 @@ namespace SchoolApiService.Controllers
         private readonly SchoolDbContext _context = context;
         private readonly ImageUploadService _imageService = imageService;
 
+        public class StaffDto
+        {
+            public int StaffId { get; set; }
+            public string? StaffName { get; set; }
+            public string? Email { get; set; }
+            public string? ImagePath { get; set; }
+            public int UniqueStaffAttendanceNumber { get; set; }
+            public string? Gender { get; set; }
+            public DateTime? DOB { get; set; }
+            public string? ContactNumber1 { get; set; }
+            public string? Designation { get; set; }
+            public string? Status { get; set; }
+            public int? DepartmentId { get; set; }
+            public DepartmentDto? Department { get; set; }
+        }
+
+        public class DepartmentDto
+        {
+            public int DepartmentId { get; set; }
+            public string? DepartmentName { get; set; }
+        }
+
+        public class StaffStatsDto
+        {
+            public int TotalStaff { get; set; }
+            public int TeacherCount { get; set; }
+            public int DepartmentCount { get; set; }
+        }
+
+        [HttpGet("stats")]
+        public async Task<ActionResult<StaffStatsDto>> GetStaffStats()
+        {
+            try
+            {
+                var totalStaff = await _context.dbsStaff.CountAsync();
+                
+                // Count Teachers: assuming Designation enum index 0 is Teacher or string comparisons
+                // From StaffListComponent.ts it seems designation === 0 or 'teacher'
+                var teacherCount = await _context.dbsStaff.CountAsync(s => s.Designation == Designation.Teacher);
+                
+                var departmentCount = await _context.dbsDepartment.CountAsync();
+
+                return Ok(new StaffStatsDto
+                {
+                    TotalStaff = totalStaff,
+                    TeacherCount = teacherCount,
+                    DepartmentCount = departmentCount
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
 
         [HttpGet]
-        public async Task<ActionResult> GetdbsStaff([FromQuery] int skip = 0, [FromQuery] int take = 2000)
+        public async Task<ActionResult<IEnumerable<StaffDto>>> GetdbsStaff([FromQuery] int skip = 0, [FromQuery] int take = 200)
         {
             try
             {
@@ -33,51 +88,24 @@ namespace SchoolApiService.Controllers
                     .OrderByDescending(s => s.StaffId)
                     .Skip(skip)
                     .Take(take)
-                    .Select(s => new
+                    .Select(s => new StaffDto
                     {
-                        s.StaffId,
-                        s.StaffName,
-                        s.Email,
-                        ImagePath = s.ImagePath,
-                        s.UniqueStaffAttendanceNumber,
+                        StaffId = s.StaffId,
+                        StaffName = s.StaffName,
+                        Email = s.Email,
+                        ImagePath = (s.ImagePath != null && s.ImagePath.Length < 2000) ? s.ImagePath : null, // Prevent hang from large legacy Base64 blobs
+                        UniqueStaffAttendanceNumber = s.UniqueStaffAttendanceNumber,
                         Gender = s.Gender != null ? s.Gender.ToString() : null,
-                        s.DOB,
-                        s.FatherName,
-                        s.MotherName,
-                        s.CNIC,
-                        s.Experience,
-                        s.TemporaryAddress,
-                        s.PermanentAddress,
-                        s.ContactNumber1,
-                        s.Qualifications,
-                        s.JoiningDate,
+                        DOB = s.DOB,
+                        ContactNumber1 = s.ContactNumber1,
                         Designation = s.Designation != null ? s.Designation.ToString() : null,
-                        s.BankAccountName,
-                        s.BankAccountNumber,
-                        s.BankName,
-                        s.BankBranch,
-                        s.Status,
-                        s.DepartmentId,
-                        Department = s.Department != null ? new { s.Department.DepartmentId, s.Department.DepartmentName } : null,
-                        s.StaffSalaryId,
-                        StaffSalary = s.StaffSalary != null ? new 
+                        Status = s.Status,
+                        DepartmentId = s.DepartmentId,
+                        Department = s.Department != null ? new DepartmentDto 
                         { 
-                            s.StaffSalary.StaffSalaryId, 
-                            s.StaffSalary.BasicSalary, 
-                            s.StaffSalary.NetSalary,
-                            s.StaffSalary.SavingFund,
-                            s.StaffSalary.Taxes
-                        } : null,
-                        StaffExperiences = s.StaffExperiences != null ? s.StaffExperiences.Select(e => new
-                        {
-                            e.StaffExperienceId,
-                            e.CompanyName,
-                            e.Designation,
-                            e.JoiningDate,
-                            e.LeavingDate,
-                            e.Responsibilities,
-                            e.Achievements
-                        }).ToList() : null
+                            DepartmentId = s.Department.DepartmentId, 
+                            DepartmentName = s.Department.DepartmentName 
+                        } : null
                     })
                     .ToListAsync();
 

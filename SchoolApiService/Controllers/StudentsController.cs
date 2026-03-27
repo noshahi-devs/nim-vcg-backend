@@ -75,6 +75,41 @@ namespace SchoolApiService.Controllers
             public string? UserId { get; set; }
         }
 
+        public class StudentStatsDto
+        {
+            public int TotalStudents { get; set; }
+            public int ActiveStudents { get; set; }
+            public int InactiveStudents { get; set; }
+        }
+
+        [HttpGet("stats")]
+        public async Task<ActionResult<StudentStatsDto>> GetStudentStats([FromQuery] int? academicYearId = null)
+        {
+            try
+            {
+                var query = _context.dbsStudent.AsQueryable();
+                if (academicYearId.HasValue)
+                {
+                    query = query.Where(s => s.AcademicYearId == academicYearId.Value);
+                }
+
+                var total = await query.CountAsync();
+                var active = await query.CountAsync(s => s.Status != null && s.Status.ToLower() == "active");
+                var inactive = await query.CountAsync(s => s.Status != null && s.Status.ToLower() == "inactive");
+
+                return Ok(new StudentStatsDto
+                {
+                    TotalStudents = total,
+                    ActiveStudents = active,
+                    InactiveStudents = inactive
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         public StudentsController(SchoolDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ImageUploadService imageService)
         {
             _context = context;
@@ -106,7 +141,7 @@ namespace SchoolApiService.Controllers
                     EnrollmentNo = s.EnrollmentNo,
                     UniqueStudentAttendanceNumber = s.UniqueStudentAttendanceNumber,
                     StudentName = s.StudentName,
-                    ImagePath = null, // Excluded from list - prevents Base64 blob serialization hang
+                    ImagePath = (s.ImagePath != null && s.ImagePath.Length < 2000) ? s.ImagePath : null, // Prevent hang from large legacy Base64 blobs
                     StudentDOB = s.StudentDOB,
                     StudentGender = s.StudentGender.HasValue ? s.StudentGender.Value.ToString() : null,
                     StudentReligion = s.StudentReligion,
