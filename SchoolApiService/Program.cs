@@ -277,20 +277,21 @@ namespace SchoolApiService
 
             // ⭐ CORS MUST BE BEFORE HttpsRedirection and Authentication
             app.UseCors("AllowAll");
+
+            // ⭐ Serve static files under /api prefix EARLY in the pipeline
+            // This ensures images load even if there are routing/auth issues later
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "images")),
+                RequestPath = "/api/images"
+            });
+
             if (!app.Environment.IsDevelopment())
             {
                 app.UseHttpsRedirection();
             }
             app.UseStaticFiles();
-
-            // ⭐ Serve any static files from wwwroot under the /api prefix 
-            // This ensures that /api/images/photo.png correctly maps to wwwroot/images/photo.png
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(
-                    Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
-                RequestPath = "/api"
-            });
 
             // Authentication & Authorization AFTER CORS
             app.UseAuthentication();

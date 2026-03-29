@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
 
@@ -11,10 +12,12 @@ namespace SchoolApiService.Controllers
     public class CommonController : ControllerBase
     {
         private readonly SchoolDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public CommonController(SchoolDbContext context)
+        public CommonController(SchoolDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         // GET: api/Common/Frequency
@@ -152,5 +155,43 @@ namespace SchoolApiService.Controllers
 
 
 
+        [HttpGet("debug-images")]
+        public IActionResult DebugImages()
+        {
+            try
+            {
+                var contentRoot = _environment.ContentRootPath;
+                var webRoot = _environment.WebRootPath;
+                var imagesDir = Path.Combine(webRoot ?? Path.Combine(contentRoot, "wwwroot"), "images");
+
+                if (!Directory.Exists(imagesDir))
+                {
+                    return Ok(new
+                    {
+                        message = "Images directory not found",
+                        searchedPath = imagesDir,
+                        contentRoot = contentRoot,
+                        webRoot = webRoot
+                    });
+                }
+
+                var files = Directory.GetFiles(imagesDir)
+                    .Select(Path.GetFileName)
+                    .ToList();
+
+                return Ok(new
+                {
+                    count = files.Count,
+                    path = imagesDir,
+                    files = files,
+                    contentRoot = contentRoot,
+                    webRoot = webRoot
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
