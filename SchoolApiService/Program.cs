@@ -283,12 +283,13 @@ namespace SchoolApiService
             }
             app.UseStaticFiles();
 
-            // ⭐ Serve images under /api/images to bypass frontend routing on live servers
+            // ⭐ Serve any static files from wwwroot under the /api prefix 
+            // This ensures that /api/images/photo.png correctly maps to wwwroot/images/photo.png
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
-                    Path.Combine(builder.Environment.WebRootPath, "images")),
-                RequestPath = "/api/images"
+                    Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+                RequestPath = "/api"
             });
 
             // Authentication & Authorization AFTER CORS
