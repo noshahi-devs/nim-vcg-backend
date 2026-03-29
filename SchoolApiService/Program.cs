@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SchoolApiService.Services;
@@ -281,6 +282,14 @@ namespace SchoolApiService
                 app.UseHttpsRedirection();
             }
             app.UseStaticFiles();
+
+            // ⭐ Serve images under /api/images to bypass frontend routing on live servers
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(builder.Environment.WebRootPath, "images")),
+                RequestPath = "/api/images"
+            });
 
             // Authentication & Authorization AFTER CORS
             app.UseAuthentication();

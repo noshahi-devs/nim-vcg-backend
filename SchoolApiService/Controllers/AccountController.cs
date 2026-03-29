@@ -219,7 +219,7 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet]
-        [Route("/GetUsers")]
+        [Route("GetUsers")]
         public async Task<IActionResult> UserIndex()
         {
             return Ok(await _userManager.Users.ToListAsync());
@@ -232,7 +232,7 @@ namespace SchoolApiService.Controllers
         }
 
         [HttpGet]
-        [Route("/GetRoles")]
+        [Route("GetRoles")]
         [Authorize()]
         public async Task<IActionResult> RoleIndex()
         {
