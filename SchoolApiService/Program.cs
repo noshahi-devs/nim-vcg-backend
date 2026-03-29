@@ -1,6 +1,7 @@
 using FastReport.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -21,6 +22,17 @@ namespace SchoolApiService
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            // ⭐ Increase request size limit for large image uploads (Base64)
+            builder.Services.Configure<FormOptions>(options => {
+                options.MultipartBodyLengthLimit = 52428800; // 50MB
+            });
+            builder.WebHost.ConfigureKestrel(options => {
+                options.Limits.MaxRequestBodySize = 52428800; // 50MB
+            });
+            builder.Services.Configure<IISServerOptions>(options => {
+                options.MaxRequestBodySize = 52428800; // 50MB
+            });
 
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
