@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SchoolApiService.Services;
 using SchoolApiService.ViewModels;
 using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
+using System.Globalization;
 
 namespace SchoolApiService.Controllers
 {
@@ -18,10 +20,12 @@ namespace SchoolApiService.Controllers
     public class AttendancesController : ControllerBase
     {
         private readonly SchoolDbContext _context;
+        private readonly IBiometricDeviceService _biometricDeviceService;
 
-        public AttendancesController (SchoolDbContext context)
+        public AttendancesController(SchoolDbContext context, IBiometricDeviceService biometricDeviceService)
         {
             _context = context;
+            _biometricDeviceService = biometricDeviceService;
         }
 
         // GET: api/Attendances
@@ -376,6 +380,114 @@ namespace SchoolApiService.Controllers
 
             return Ok(report);
         }
+
+        [HttpPost("FetchFromMachine")]
+        public async Task<ActionResult> FetchFromMachine([FromBody] ZktecoMachineFetchRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var targetDate = (request.Date ?? DateTime.Today).Date;
+            var targetEndDate = targetDate.AddDays(1);
+
+            IReadOnlyList<BiometricLogEntry> logs;
+            try
+            {
+                logs = await _biometricDeviceService.FetchLogsAsync(request, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+
+            var dailyLogs = logs
+                .Where(x => x.PunchTime >= targetDate && x.PunchTime < targetEndDate)
+                .ToList();
+
+            var grouped = dailyLogs
+                .GroupBy(x => x.EnrollNumber)
+                .Select(g => new
+                {
+                    EnrollNumber = g.Key,
+                    InTime = g.Min(x => x.PunchTime),
+                    OutTime = g.Max(x => x.PunchTime),
+                    TotalPunches = g.Count()
+                })
+                .OrderBy(x => x.InTime)
+                .ToList();
+
+            var attendanceNumbers = grouped
+                .Select(x => int.TryParse(x.EnrollNumber, out var parsed) ? parsed : (int?)null)
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .Distinct()
+                .ToList();
+
+            var staffMap = await _context.dbsStaff
+                .AsNoTracking()
+                .Where(s => attendanceNumbers.Contains(s.UniqueStaffAttendanceNumber))
+                .Select(s => new
+                {
+                    s.StaffId,
+                    s.StaffName,
+                    s.UniqueStaffAttendanceNumber
+                })
+                .ToDictionaryAsync(
+                    x => x.UniqueStaffAttendanceNumber,
+                    x => new { x.StaffId, x.StaffName },
+                    cancellationToken);
+
+            var rows = grouped
+                .Select((x, idx) =>
+                {
+                    var hasNumericEnroll = int.TryParse(x.EnrollNumber, out var enrollNo);
+                    var staffFound = false;
+                    int staffId = 0;
+                    string? staffName = null;
+
+                    if (hasNumericEnroll && staffMap.TryGetValue(enrollNo, out var staff))
+                    {
+                        staffFound = true;
+                        staffId = staff.StaffId;
+                        staffName = staff.StaffName;
+                    }
+
+                    var inTime = x.InTime.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture).ToLowerInvariant();
+                    var outTime = x.OutTime.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture).ToLowerInvariant();
+
+                    return new ZktecoAttendanceRowVm
+                    {
+                        SrNo = idx + 1,
+                        EmployeeId = staffFound ? $"EMP-AFT-{staffId:0000}" : x.EnrollNumber,
+                        Name = staffFound ? (staffName ?? string.Empty) : $"Unknown ({x.EnrollNumber})",
+                        Attendance = string.Empty,
+                        LeaveCategory = string.Empty,
+                        Date = x.InTime.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                        InTime = inTime,
+                        OutTime = outTime,
+                        Remarks = staffFound ? string.Empty : "No staff mapping found for this enroll number."
+                    };
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                machineId = request.MachineId,
+                machineNo = request.MachineNo,
+                machineName = request.MachineName,
+                ip = request.IP,
+                date = targetDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                totalLogsRead = logs.Count,
+                totalLogsForDate = dailyLogs.Count,
+                rows
+            });
+        }
+
         private bool AttendanceExists(int id)
         {
             return _context.dbsAttendance.Any(e => e.AttendanceId == id);

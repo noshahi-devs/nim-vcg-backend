@@ -141,6 +141,7 @@ namespace SchoolApiService
             //builder.Services.AddTokenService();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddScoped<IBiometricDeviceService, ZktecoBiometricDeviceService>();
 
             // ========================
             // Email Notification System
