@@ -127,9 +127,81 @@ namespace SchoolApiService.Controllers
             return NoContent();
         }
 
+        // POST: api/DueBalances/sync
+        [HttpPost("sync")]
+        public async Task<IActionResult> SyncBalances()
+        {
+            try
+            {
+                var students = await _context.dbsStudent
+                    .Where(s => s.Status == null || s.Status.ToLower() == "active")
+                    .ToListAsync();
+                
+                int updatedCount = 0;
+
+                foreach (var student in students)
+                {
+                    // 1. Get latest MonthlyPayment for this student
+                    var latestMonthly = await _context.monthlyPayments
+                        .Where(p => p.StudentId == student.StudentId)
+                        .OrderByDescending(p => p.PaymentDate)
+                        .FirstOrDefaultAsync();
+
+                    decimal currentDue = 0;
+
+                    if (latestMonthly != null)
+                    {
+                        currentDue = latestMonthly.AmountRemaining ?? 0;
+                    }
+                    else
+                    {
+                        // 2. If no monthly payment record, check standard fees
+                        if (student.StandardId.HasValue)
+                        {
+                            currentDue = await _context.fees
+                                .Where(f => f.StandardId == student.StandardId.Value)
+                                .SumAsync(f => f.Amount);
+                        }
+                    }
+
+                    // 3. Update or Add to DueBalance table
+                    if (currentDue > 0)
+                    {
+                        var dueBalance = await _context.dbsDueBalance
+                            .FirstOrDefaultAsync(db => db.StudentId == student.StudentId);
+
+                        if (dueBalance != null)
+                        {
+                            dueBalance.DueBalanceAmount = currentDue;
+                            dueBalance.LastUpdate = DateTime.Now;
+                        }
+                        else
+                        {
+                            _context.dbsDueBalance.Add(new DueBalance
+                            {
+                                StudentId = student.StudentId,
+                                DueBalanceAmount = currentDue,
+                                LastUpdate = DateTime.Now
+                            });
+                        }
+                        updatedCount++;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = $"Financial records synchronized successfully. {updatedCount} students with dues identified.", count = updatedCount });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Sync Error: {ex.Message}");
+                return StatusCode(500, $"Sync Failed: {ex.Message}");
+            }
+        }
+
         private bool DueBalanceExists(int id)
         {
             return _context.dbsDueBalance.Any(e => e.DueBalanceId == id);
         }
+
     }
 }
