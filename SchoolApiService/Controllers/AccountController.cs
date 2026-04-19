@@ -8,6 +8,7 @@ using SchoolApp.DAL.SchoolContext;
 using SchoolApp.Models.DataModels;
 using SchoolApp.Models.DataModels.SecurityModels;
 using SchoolApp.Models.Email;
+using System.ComponentModel.DataAnnotations;
 
 namespace SchoolApiService.Controllers
 {
@@ -427,6 +428,60 @@ namespace SchoolApiService.Controllers
             }
         }
 
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            if (!ModelState.IsValid) 
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                Console.WriteLine($"[ChangePassword] Model invalid: {errors}");
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) 
+            {
+                Console.WriteLine($"[ChangePassword] User not found: {model.Email}");
+                return NotFound(new { message = "User not found" });
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Password updated successfully" });
+            }
+
+            var identityErrors = string.Join(", ", result.Errors.Select(e => e.Description));
+            Console.WriteLine($"[ChangePassword] Identity error for {model.Email}: {identityErrors}");
+            return BadRequest(new { message = identityErrors });
+        }
+
+        [HttpPost("force-reset-password")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ForceResetPassword([FromBody] ForceResetPasswordDto model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return NotFound(new { message = "User account not found." });
+
+            var removeResult = await _userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded && removeResult.Errors.All(e => e.Code != "UserHasNoPassword"))
+            {
+                return BadRequest(new { message = string.Join(", ", removeResult.Errors.Select(e => e.Description)) });
+            }
+
+            var addResult = await _userManager.AddPasswordAsync(user, model.NewPassword);
+            if (addResult.Succeeded)
+            {
+                return Ok(new { message = "Password has been force-reset successfully." });
+            }
+
+            return BadRequest(new { message = string.Join(", ", addResult.Errors.Select(e => e.Description)) });
+        }
+
 
         [HttpPost]
         [Route("logout")]
@@ -508,5 +563,23 @@ namespace SchoolApiService.Controllers
     public class ToggleStatusDto
     {
         public string Status { get; set; } = "Active";
+    }
+
+    public class ChangePasswordDto
+    {
+        [Required]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string CurrentPassword { get; set; } = string.Empty;
+        [Required]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
+    public class ForceResetPasswordDto
+    {
+        [Required]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string NewPassword { get; set; } = string.Empty;
     }
 }
