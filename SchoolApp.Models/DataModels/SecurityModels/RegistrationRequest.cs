@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -19,5 +19,7 @@ namespace SchoolApp.Models.DataModels.SecurityModels
         public string? Password { get; set; }
 
         public IList<string> Role { get; set; } = [];
+        
+        public string? PhoneNumber { get; set; }
     }
 }

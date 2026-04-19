@@ -17,10 +17,11 @@ namespace SchoolApiService.Controllers
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
-    public class StaffsController(SchoolDbContext context, ImageUploadService imageService) : ControllerBase
+    public class StaffsController(SchoolDbContext context, ImageUploadService imageService, Microsoft.AspNetCore.Identity.UserManager<SchoolApp.Models.DataModels.SecurityModels.ApplicationUser> userManager) : ControllerBase
     {
         private readonly SchoolDbContext _context = context;
         private readonly ImageUploadService _imageService = imageService;
+        private readonly Microsoft.AspNetCore.Identity.UserManager<SchoolApp.Models.DataModels.SecurityModels.ApplicationUser> _userManager = userManager;
 
         public class StaffDto
         {
@@ -510,6 +511,16 @@ namespace SchoolApiService.Controllers
                 _context.dbsStaffExperience.RemoveRange(staff.StaffExperiences ?? new List<StaffExperience>());
                 _context.dbsStaff.Remove(staff);
                 await _context.SaveChangesAsync();
+
+                // Wait! Since the UI wants full sync: If staff is deleted, also delete their login account
+                if (!string.IsNullOrEmpty(staff.Email)) 
+                {
+                    var user = await _userManager.FindByEmailAsync(staff.Email);
+                    if (user != null) 
+                    {
+                        await _userManager.DeleteAsync(user);
+                    }
+                }
             }
             catch (DbUpdateException ex)
             {

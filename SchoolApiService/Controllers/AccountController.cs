@@ -60,7 +60,7 @@ namespace SchoolApiService.Controllers
             }
 
 
-            var user = new ApplicationUser { UserName = request.Username, Email = request.Email, Role = request.Role };
+            var user = new ApplicationUser { UserName = request.Username, Email = request.Email, Role = request.Role, PhoneNumber = request.PhoneNumber };
 
             var result = await _userManager.CreateAsync(
                  user,
@@ -222,7 +222,18 @@ namespace SchoolApiService.Controllers
         [Route("GetUsers")]
         public async Task<IActionResult> UserIndex()
         {
-            return Ok(await _userManager.Users.ToListAsync());
+            var users = await _userManager.Users.Select(u => new
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,
+                Role = u.Role,
+                Status = u.Status,
+                CreatedOn = u.CreatedOn,
+                PhoneNumber = u.PhoneNumber
+            }).ToListAsync();
+            
+            return Ok(users);
         }
 
         [HttpGet("GetUser/{id}")]
@@ -431,6 +442,26 @@ namespace SchoolApiService.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound("User not found");
             
+            // Check for associated staff record
+            var staff = await _context.Set<Staff>().Include(s => s.StaffExperiences).FirstOrDefaultAsync(s => s.Email == user.Email);
+            if (staff != null)
+            {
+                // Enforce safety constraints before deleting staff
+                var isSectionTeacher = await _context.Sections.AnyAsync(s => s.StaffId == staff.StaffId);
+                var hasSubjectAssignments = await _context.SubjectAssignments.AnyAsync(sa => sa.StaffId == staff.StaffId);
+                var hasLeaves = await _context.Leaves.AnyAsync(l => l.StaffId == staff.StaffId);
+                var hasMarks = await _context.dbsMark.AnyAsync(m => m.StaffId == staff.StaffId);
+
+                if (isSectionTeacher || hasSubjectAssignments || hasLeaves || hasMarks)
+                {
+                    return BadRequest(new { message = "Cannot delete this login because the associated staff member has linked school records (Classes, Subjects, etc.). Please reassign their duties first." });
+                }
+
+                _context.Set<StaffExperience>().RemoveRange(staff.StaffExperiences ?? new List<StaffExperience>());
+                _context.Set<Staff>().Remove(staff);
+                await _context.SaveChangesAsync();
+            }
+
             var result = await _userManager.DeleteAsync(user);
             if (result.Succeeded) return Ok();
             
