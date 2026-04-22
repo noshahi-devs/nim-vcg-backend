@@ -134,18 +134,8 @@ namespace SchoolApp.Models.DataModels
         [ForeignKey("UserId")]
         public ApplicationUser? User { get; set; }
 
-        //// Constructor to initialize UniqueAttendanceId
-        //public Student()
-        //{
-        //    UniqueStudentAttendanceId = "STD-" + GenerateFixedNumbers(); // Generate fixed numbers
-        //}
+        public ICollection<StudentFee>? StudentFees { get; set; }
 
-        //private string GenerateFixedNumbers()
-        //{
-        //    // You can generate a random or sequential number here
-        //    // For simplicity, let's generate a sequential number for demonstration
-        //    return "STD-" + (1000 + StudentId).ToString(); // Example: STD-1001, STD-1002, etc.
-        //}
     }
 
     public enum GenderList

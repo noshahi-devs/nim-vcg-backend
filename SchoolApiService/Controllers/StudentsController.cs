@@ -74,6 +74,17 @@ namespace SchoolApiService.Controllers
             public int? ParentId { get; set; }
             public string? UserId { get; set; }
             public decimal? DefaultDiscount { get; set; }
+            public List<StudentFeeDto>? StudentFees { get; set; }
+        }
+
+        public class StudentFeeDto
+        {
+            public int StudentFeeId { get; set; }
+            public int StudentId { get; set; }
+            public int FeeId { get; set; }
+            public decimal AssignedAmount { get; set; }
+            public string? FeeName { get; set; }
+            public string? PaymentFrequency { get; set; }
         }
 
         public class StudentStatsDto
@@ -176,7 +187,16 @@ namespace SchoolApiService.Controllers
                     CampusId = s.CampusId,
                     ParentId = s.ParentId,
                     UserId = s.UserId,
-                    DefaultDiscount = s.DefaultDiscount
+                    DefaultDiscount = s.DefaultDiscount,
+                    StudentFees = s.StudentFees.Select(f => new StudentFeeDto
+                    {
+                        StudentFeeId = f.StudentFeeId,
+                        StudentId = f.StudentId,
+                        FeeId = f.FeeId,
+                        AssignedAmount = f.AssignedAmount,
+                        FeeName = (f.Fee != null && f.Fee.feeType != null) ? f.Fee.feeType.TypeName : (f.Fee != null ? "General Fee" : "Assigned Fee"),
+                        PaymentFrequency = f.Fee != null ? f.Fee.PaymentFrequency.ToString() : "Monthly"
+                    }).ToList()
                 })
                 .ToListAsync();
         }
@@ -228,7 +248,16 @@ namespace SchoolApiService.Controllers
                     CampusId = s.CampusId,
                     ParentId = s.ParentId,
                     UserId = s.UserId,
-                    DefaultDiscount = s.DefaultDiscount
+                    DefaultDiscount = s.DefaultDiscount,
+                    StudentFees = s.StudentFees.Select(f => new StudentFeeDto
+                    {
+                        StudentFeeId = f.StudentFeeId,
+                        StudentId = f.StudentId,
+                        FeeId = f.FeeId,
+                        AssignedAmount = f.AssignedAmount,
+                        FeeName = (f.Fee != null && f.Fee.feeType != null) ? f.Fee.feeType.TypeName : (f.Fee != null ? "General Fee" : "Assigned Fee"),
+                        PaymentFrequency = f.Fee != null ? f.Fee.PaymentFrequency.ToString() : "Monthly"
+                    }).ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -344,6 +373,39 @@ namespace SchoolApiService.Controllers
                 }
             }
 
+            // 4. Sync Student Fees
+            if (student.StudentFees != null)
+            {
+                // Remove fees that are no longer sent
+                var incomingFeeIds = student.StudentFees.Select(f => f.FeeId).ToList();
+                var feesToRemove = _context.StudentFees
+                    .Where(sf => sf.StudentId == existingStudent.StudentId && !incomingFeeIds.Contains(sf.FeeId))
+                    .ToList();
+                
+                if (feesToRemove.Any())
+                {
+                    _context.StudentFees.RemoveRange(feesToRemove);
+                }
+
+                // Add or update fees
+                foreach (var incomingFee in student.StudentFees)
+                {
+                    var existingFee = _context.StudentFees
+                        .FirstOrDefault(sf => sf.StudentId == existingStudent.StudentId && sf.FeeId == incomingFee.FeeId);
+                    
+                    if (existingFee != null)
+                    {
+                        existingFee.AssignedAmount = incomingFee.AssignedAmount;
+                        _context.Entry(existingFee).State = EntityState.Modified;
+                    }
+                    else
+                    {
+                        incomingFee.StudentId = existingStudent.StudentId;
+                        _context.StudentFees.Add(incomingFee);
+                    }
+                }
+            }
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -436,9 +498,23 @@ namespace SchoolApiService.Controllers
                 student.AdmissionNo = nextAdmissionNo;
                 student.EnrollmentNo = nextEnrollmentNo;
 
-                // Add the student to the context
+                // Add the student to the context (temporarily clear StudentFees to avoid FK issue)
+                var incomingStudentFees = student.StudentFees?.ToList() ?? new List<StudentFee>();
+                student.StudentFees = null; // Detach to prevent EF from trying to insert with StudentId=0
                 _context.dbsStudent.Add(student);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); // Student now has a real StudentId
+
+                // Now save the StudentFees with the correct StudentId
+                if (incomingStudentFees.Any())
+                {
+                    foreach (var fee in incomingStudentFees)
+                    {
+                        fee.StudentId = student.StudentId;
+                        fee.StudentFeeId = 0; // Ensure it's treated as a new insert
+                        _context.StudentFees.Add(fee);
+                    }
+                    await _context.SaveChangesAsync();
+                }
 
                 // Create User Account if Email is provided
                 if (!string.IsNullOrEmpty(student.StudentEmail))

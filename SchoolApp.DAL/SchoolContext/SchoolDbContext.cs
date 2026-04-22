@@ -62,6 +62,7 @@ namespace SchoolApp.DAL.SchoolContext
         public DbSet<SubjectAssignment> SubjectAssignments { get; set; }
         public DbSet<Campus> Campuses { get; set; }
         public DbSet<Parent> Parents { get; set; }
+        public DbSet<StudentFee> StudentFees { get; set; }
 
         #endregion
 
