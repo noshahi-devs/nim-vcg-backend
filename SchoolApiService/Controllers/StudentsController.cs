@@ -73,6 +73,7 @@ namespace SchoolApiService.Controllers
             public int? CampusId { get; set; }
             public int? ParentId { get; set; }
             public string? UserId { get; set; }
+            public decimal? DefaultDiscount { get; set; }
         }
 
         public class StudentStatsDto
@@ -174,7 +175,8 @@ namespace SchoolApiService.Controllers
                     AcademicYearId = s.AcademicYearId,
                     CampusId = s.CampusId,
                     ParentId = s.ParentId,
-                    UserId = s.UserId
+                    UserId = s.UserId,
+                    DefaultDiscount = s.DefaultDiscount
                 })
                 .ToListAsync();
         }
@@ -225,7 +227,8 @@ namespace SchoolApiService.Controllers
                     AcademicYearId = s.AcademicYearId,
                     CampusId = s.CampusId,
                     ParentId = s.ParentId,
-                    UserId = s.UserId
+                    UserId = s.UserId,
+                    DefaultDiscount = s.DefaultDiscount
                 })
                 .FirstOrDefaultAsync();
 
@@ -248,43 +251,98 @@ namespace SchoolApiService.Controllers
                 return BadRequest("Invalid StudentId");
             }
 
-            if (student.StandardId != null)
+            var existingStudent = await _context.dbsStudent
+                .Include(s => s.Standard)
+                .Include(s => s.SectionObject)
+                .FirstOrDefaultAsync(s => s.StudentId == id);
+
+            if (existingStudent == null)
             {
-                student.Standard = await _context.dbsStandard.FindAsync(student.StandardId);
-                if (student.Standard == null)
+                return NotFound("Student not found.");
+            }
+
+            // 1. Basic Fields
+            existingStudent.AdmissionNo = student.AdmissionNo;
+            existingStudent.EnrollmentNo = student.EnrollmentNo;
+            existingStudent.UniqueStudentAttendanceNumber = student.UniqueStudentAttendanceNumber;
+            existingStudent.StudentName = student.StudentName;
+            existingStudent.StudentDOB = student.StudentDOB;
+            existingStudent.StudentGender = student.StudentGender;
+            existingStudent.StudentReligion = student.StudentReligion;
+            existingStudent.StudentBloodGroup = student.StudentBloodGroup;
+            existingStudent.StudentNationality = student.StudentNationality;
+            existingStudent.StudentNIDNumber = student.StudentNIDNumber;
+            existingStudent.StudentContactNumber1 = student.StudentContactNumber1;
+            existingStudent.StudentContactNumber2 = student.StudentContactNumber2;
+            existingStudent.StudentEmail = student.StudentEmail;
+            existingStudent.ParentEmail = student.ParentEmail;
+            existingStudent.PermanentAddress = student.PermanentAddress;
+            existingStudent.TemporaryAddress = student.TemporaryAddress;
+            existingStudent.FatherName = student.FatherName;
+            existingStudent.FatherNID = student.FatherNID;
+            existingStudent.FatherContactNumber = student.FatherContactNumber;
+            existingStudent.MotherName = student.MotherName;
+            existingStudent.MotherNID = student.MotherNID;
+            existingStudent.MotherContactNumber = student.MotherContactNumber;
+            existingStudent.LocalGuardianName = student.LocalGuardianName;
+            existingStudent.LocalGuardianContactNumber = student.LocalGuardianContactNumber;
+            existingStudent.GuardianPhone = student.GuardianPhone;
+            existingStudent.PreviousSchool = student.PreviousSchool;
+            existingStudent.DefaultDiscount = student.DefaultDiscount;
+            existingStudent.AdmissionDate = student.AdmissionDate;
+            existingStudent.Status = student.Status;
+            existingStudent.AcademicYearId = student.AcademicYearId;
+            existingStudent.CampusId = student.CampusId;
+
+            // 2. Relational Fields (Class & Section)
+            if (student.StandardId != existingStudent.StandardId)
+            {
+                existingStudent.StandardId = student.StandardId;
+                if (student.StandardId != null)
                 {
-                    return BadRequest($"Invalid StandardId: {student.StandardId}");
+                    existingStudent.Standard = await _context.dbsStandard.FindAsync(student.StandardId);
+                }
+                else
+                {
+                    existingStudent.Standard = null;
                 }
             }
 
-            if (student.SectionId != null)
+            if (student.SectionId != existingStudent.SectionId)
             {
-                student.SectionObject = await _context.Sections.FindAsync(student.SectionId);
-                if (student.SectionObject == null)
+                existingStudent.SectionId = student.SectionId;
+                if (student.SectionId != null)
                 {
-                    return BadRequest($"Invalid SectionId: {student.SectionId}");
+                    existingStudent.SectionObject = await _context.Sections.FindAsync(student.SectionId);
+                    existingStudent.Section = existingStudent.SectionObject?.SectionName;
                 }
-                student.Section = student.SectionObject.SectionName; // keeping fallback copy
+                else
+                {
+                    existingStudent.SectionObject = null;
+                    existingStudent.Section = student.Section; // fallback to string if provided
+                }
+            }
+            else
+            {
+                // Ensure text representation is in sync
+                existingStudent.Section = student.Section;
             }
 
-            // Check if binary image data is provided for upload
+            // 3. Image Upload
             if (student.ImageUpload?.ImageData != null)
             {
-                // Delete old file if it exists and we're replacing it
-                if (!string.IsNullOrEmpty(student.ImagePath))
+                // Delete old file if it exists
+                if (!string.IsNullOrEmpty(existingStudent.ImagePath))
                 {
-                    _imageService.DeleteOldImage(student.ImagePath);
+                    _imageService.DeleteOldImage(existingStudent.ImagePath);
                 }
 
-                // Upload new image and get relative path
                 var path = await _imageService.Upload(student.ImageUpload);
                 if (path != null)
                 {
-                    student.ImagePath = path;
+                    existingStudent.ImagePath = path;
                 }
             }
-
-            _context.Entry(student).State = EntityState.Modified;
 
             try
             {
@@ -300,6 +358,10 @@ namespace SchoolApiService.Controllers
                 {
                     throw;
                 }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.InnerException?.Message ?? ex.Message}");
             }
 
             return NoContent();

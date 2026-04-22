@@ -16,7 +16,6 @@ namespace SchoolApiService.Controllers
             _context = context;
         }
 
-        // GET: api/MonthlyPayments?skip=0&take=2000
         [HttpGet]
         public async Task<IActionResult> GetMonthlyPayments([FromQuery] int skip = 0, [FromQuery] int take = 2000)
         {
@@ -24,6 +23,9 @@ namespace SchoolApiService.Controllers
             {
                 var monthlyPayments = await _context.monthlyPayments
                     .AsNoTracking()
+                    .Include(p => p.Student)
+                    .Include(p => p.fees)
+                    .Include(p => p.academicMonths)
                     .OrderByDescending(p => p.PaymentDate)
                     .Skip(skip)
                     .Take(take)
@@ -64,7 +66,7 @@ namespace SchoolApiService.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception: {ex}");
+                Console.WriteLine($"[Error] GetMonthlyPayments: {ex}");
                 return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
@@ -224,7 +226,7 @@ namespace SchoolApiService.Controllers
 
             try
             {
-                // 1. Attach related lookup data
+                // 1. Attach related lookup data (populate fees/months based on IDs)
                 await AttachFeeAsync(monthlyPayment);
                 await AttachAcademicMonthAsync(monthlyPayment);
                 
@@ -232,7 +234,6 @@ namespace SchoolApiService.Controllers
                 await CalculatePaymentFieldsAsync(monthlyPayment);
 
                 // 3. Prepare child records (PaymentDetails and MonthDetails) 
-                // We add them to the parent's collections so they save together
                 monthlyPayment.PaymentDetails = new List<PaymentDetail>();
                 if (monthlyPayment.fees != null)
                 {
@@ -259,10 +260,10 @@ namespace SchoolApiService.Controllers
                     }
                 }
 
-                // 4. Update DueBalance (adding to context tracker)
+                // 4. Update DueBalance summary
                 await PrepareDueBalanceUpdateAsync(monthlyPayment);
 
-                // 5. Add parent and save everything in ONE transaction automatically
+                // 5. Finalize
                 _context.monthlyPayments.Add(monthlyPayment);
                 await _context.SaveChangesAsync();
 
@@ -271,38 +272,37 @@ namespace SchoolApiService.Controllers
             catch (Exception ex)
             {
                 var inner = ex.InnerException?.Message ?? "No Inner Exception";
-                Console.WriteLine($"Create Error: {ex.Message} {inner}");
+                Console.WriteLine($"Create Error: {ex.Message}. Inner: {inner}");
                 return StatusCode(500, $"Save Failed: {ex.Message}. {inner}");
             }
         }
 
         private async Task CalculatePaymentFieldsAsync(MonthlyPayment monthlyPayment)
         {
-            var student = await _context.dbsStudent
-                .Where(s => s.StudentId == monthlyPayment.StudentId)
-                .FirstOrDefaultAsync();
+            if (monthlyPayment.StudentId == 0) return;
 
-            if (student == null)
-            {
-                throw new Exception("Invalid Student Id: " + monthlyPayment.StudentId);
-            }
-            
             var academicMonthsCount = monthlyPayment.academicMonths?.Count ?? 0;
-            monthlyPayment.TotalFeeAmount = monthlyPayment.fees?.Sum(fs => fs.Amount * academicMonthsCount) ?? 0;
+            // Total Fee = (Sum of check fees) * number of months selected
+            var sumFees = monthlyPayment.fees?.Sum(f => f.Amount) ?? 0;
+            monthlyPayment.TotalFeeAmount = sumFees * (academicMonthsCount > 0 ? academicMonthsCount : 1);
 
-            var previousDue = await _context.dbsDueBalance
+            // Fetch current arrear if not provided or to ensure accuracy
+            var dueBalance = await _context.dbsDueBalance
+                .AsNoTracking()
                 .Where(b => b.StudentId == monthlyPayment.StudentId)
-                .Select(b => b.DueBalanceAmount)
                 .FirstOrDefaultAsync();
 
-            monthlyPayment.PreviousDue = previousDue ?? 0;
+            monthlyPayment.PreviousDue = dueBalance?.DueBalanceAmount ?? 0;
             
             decimal totalFee = monthlyPayment.TotalFeeAmount ?? 0;
             decimal waverPercent = monthlyPayment.Waver ?? 0;
             decimal prevDue = monthlyPayment.PreviousDue ?? 0;
             decimal paid = monthlyPayment.AmountPaid ?? 0;
 
-            monthlyPayment.TotalAmount = totalFee - (totalFee * (waverPercent / 100)) + prevDue;
+            // Total Amount = (Gross - Discount) + Arrears
+            monthlyPayment.TotalAmount = (totalFee - (totalFee * (waverPercent / 100))) + prevDue;
+            
+            // Remaining = Total Amount - Current Paid
             monthlyPayment.AmountRemaining = monthlyPayment.TotalAmount - paid;
         }
 
