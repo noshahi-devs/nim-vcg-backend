@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -15,6 +15,7 @@ namespace SchoolApp.Models.DataModels
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PaymentDetailId { get; set; }
         public int MonthlyPaymentId { get; set; }
+        public int? FeeId { get; set; }
         public string FeeName { get; set; }
         public decimal FeeAmount { get; set; }
 

@@ -155,13 +155,20 @@ namespace SchoolApiService.Controllers
                 // 3. Re-populate details
                 if (existingMonthlyPayment.fees != null)
                 {
+                    var studentOverrides = await _context.StudentFees
+                        .Where(sf => sf.StudentId == existingMonthlyPayment.StudentId)
+                        .ToListAsync();
+
                     foreach (var fee in existingMonthlyPayment.fees)
                     {
                         var feeType = await _context.dbsFeeType.FindAsync(fee.FeeTypeId);
+                        var overrideFee = studentOverrides.FirstOrDefault(o => o.FeeId == fee.FeeId);
+                        
                         existingMonthlyPayment.PaymentDetails.Add(new PaymentDetail
                         {
-                            FeeAmount = fee.Amount,
-                            FeeName = feeType?.TypeName ?? "Fee"
+                            FeeId = fee.FeeId,
+                            FeeAmount = overrideFee?.AssignedAmount ?? fee.Amount,
+                            FeeName = (feeType?.TypeName ?? "Fee") + (overrideFee != null ? " (Custom)" : "")
                         });
                     }
                 }
@@ -237,13 +244,20 @@ namespace SchoolApiService.Controllers
                 monthlyPayment.PaymentDetails = new List<PaymentDetail>();
                 if (monthlyPayment.fees != null)
                 {
+                    var studentOverrides = await _context.StudentFees
+                        .Where(sf => sf.StudentId == monthlyPayment.StudentId)
+                        .ToListAsync();
+
                     foreach (var fee in monthlyPayment.fees)
                     {
                         var feeType = await _context.dbsFeeType.FindAsync(fee.FeeTypeId);
+                        var overrideFee = studentOverrides.FirstOrDefault(o => o.FeeId == fee.FeeId);
+
                         monthlyPayment.PaymentDetails.Add(new PaymentDetail
                         {
-                            FeeAmount = fee.Amount,
-                            FeeName = feeType?.TypeName ?? "Fee"
+                            FeeId = fee.FeeId,
+                            FeeAmount = overrideFee?.AssignedAmount ?? fee.Amount,
+                            FeeName = (feeType?.TypeName ?? "Fee") + (overrideFee != null ? " (Custom)" : "")
                         });
                     }
                 }
@@ -282,8 +296,22 @@ namespace SchoolApiService.Controllers
             if (monthlyPayment.StudentId == 0) return;
 
             var academicMonthsCount = monthlyPayment.academicMonths?.Count ?? 0;
-            // Total Fee = (Sum of check fees) * number of months selected
-            var sumFees = monthlyPayment.fees?.Sum(f => f.Amount) ?? 0;
+            
+            // Fetch student overrides to calculate corect total
+            var studentOverrides = await _context.StudentFees
+                .Where(sf => sf.StudentId == monthlyPayment.StudentId)
+                .ToListAsync();
+
+            decimal sumFees = 0;
+            if (monthlyPayment.fees != null)
+            {
+                foreach (var fee in monthlyPayment.fees)
+                {
+                    var overrideFee = studentOverrides.FirstOrDefault(o => o.FeeId == fee.FeeId);
+                    sumFees += overrideFee?.AssignedAmount ?? fee.Amount;
+                }
+            }
+
             monthlyPayment.TotalFeeAmount = sumFees * (academicMonthsCount > 0 ? academicMonthsCount : 1);
 
             // Fetch current arrear if not provided or to ensure accuracy

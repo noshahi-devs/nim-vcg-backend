@@ -73,17 +73,17 @@ namespace SchoolApiService.Controllers
         }
 
         // GET: api/Common/DueBalances/5
-        [HttpGet("DueBalances/{id}")]
-        public async Task<ActionResult<DueBalance>> GetDueBalance(int id)
+        [HttpGet("DueBalances/{studentId}")]
+        public async Task<ActionResult<DueBalance>> GetDueBalance(int studentId)
         {
-            var dueBalance = await _context.dbsDueBalance.FindAsync(id);
+            var dueBalance = await _context.dbsDueBalance.FirstOrDefaultAsync(b => b.StudentId == studentId);
 
             if (dueBalance == null)
             {
-                return NotFound();
+                return Ok(new DueBalance { StudentId = studentId, DueBalanceAmount = 0, LastUpdate = DateTime.Now });
             }
 
-            return dueBalance;
+            return Ok(dueBalance);
         }
 
 
