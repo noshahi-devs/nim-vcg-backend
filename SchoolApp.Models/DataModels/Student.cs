@@ -103,6 +103,7 @@ namespace SchoolApp.Models.DataModels
         public string? Section { get; set; }
         public string? GuardianPhone { get; set; }
         public string? PreviousSchool { get; set; }
+        public decimal? DefaultDiscount { get; set; } = 0;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? AdmissionDate { get; set; }
 
