@@ -20,6 +20,8 @@ namespace SchoolApp.Models.DataModels
         public Campus? Campus { get; set; }
         public int? StudentId { get; set; }
         public decimal? TotalAmount { get; set; }
+        public decimal? TotalFeeAmount { get; set; }
+        public decimal? PreviousDue { get; set; }
         public decimal? AmountPaid { get; set; }
         public decimal? AmountRemaining { get; set; }
         public decimal? Waver { get; set; }
