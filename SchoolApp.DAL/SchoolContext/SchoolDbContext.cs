@@ -1615,10 +1615,7 @@ new Student
             //    }
             //);
 
-
-
-
-            #endregion
+            #endregion // Closes Seed Data
         }
     }
 }

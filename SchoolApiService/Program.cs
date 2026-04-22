@@ -270,7 +270,10 @@ namespace SchoolApiService
                 {
                     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                    var context = services.GetRequiredService<SchoolDbContext>(); // Added this
+
                     await DataSeeder.SeedAdminUser(userManager, roleManager);
+                    await DataSeeder.SeedAcademicMonths(context); // Added this
                 }
                 catch (Exception ex)
                 {

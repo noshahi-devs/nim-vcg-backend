@@ -34,8 +34,9 @@ namespace SchoolApiService.Controllers
         {
             var payments = await _context.monthlyPayments
                 .Include(p => p.PaymentDetails) // Include PaymentDetails
-        .Include(p => p.paymentMonths) // Include paymentMonths
-        .Where(p => p.StudentId == studentId)
+                .Include(p => p.paymentMonths)  // Include paymentMonths
+                .Include(p => p.academicMonths) // ADDED: Required for duplicate check
+                .Where(p => p.StudentId == studentId)
                 .ToListAsync();
 
             if (payments == null || payments.Count == 0)
