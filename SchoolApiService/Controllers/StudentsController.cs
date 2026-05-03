@@ -429,6 +429,143 @@ namespace SchoolApiService.Controllers
             return NoContent();
         }
 
+        // POST: api/Students/bulk
+        [HttpPost("bulk")]
+        public async Task<ActionResult> BulkSave([FromBody] List<Student> students, [FromQuery] int? academicYearId = null)
+        {
+            if (students == null || students.Count == 0) return BadRequest("No student data provided.");
+
+            var results = new List<object>();
+            var activeYearId = academicYearId ?? await GetActiveAcademicYearId();
+            
+            // If still null, try to find the year that matches the current date
+            if (activeYearId == null)
+            {
+                var currentYearStr = DateTime.Now.Year.ToString();
+                activeYearId = await _context.dbsAcademicYears
+                    .Where(y => y.Name.Contains(currentYearStr))
+                    .Select(y => y.AcademicYearId)
+                    .FirstOrDefaultAsync();
+                
+                // Final fallback: just take the latest created year
+                if (activeYearId == null)
+                {
+                    activeYearId = await _context.dbsAcademicYears
+                        .OrderByDescending(y => y.AcademicYearId)
+                        .Select(y => y.AcademicYearId)
+                        .FirstOrDefaultAsync();
+                }
+            }
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync<ActionResult>(async () =>
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                try
+                {
+                    foreach (var student in students)
+                    {
+                        // Standard & Section Validation
+                        if (student.StandardId != null)
+                        {
+                            student.Standard = await _context.dbsStandard.FindAsync(student.StandardId);
+                        }
+                        if (student.SectionId != null)
+                        {
+                            student.SectionObject = await _context.Sections.FindAsync(student.SectionId);
+                            student.Section = student.SectionObject?.SectionName;
+                        }
+
+                        student.AcademicYearId ??= activeYearId;
+
+                        // Auto Numbers
+                        int nextAttendanceNumber = 1000;
+                        int nextAdmissionNo = 1000;
+                        int nextEnrollmentNo = 2000;
+
+                        if (await _context.dbsStudent.AnyAsync())
+                        {
+                            nextAttendanceNumber = await _context.dbsStudent.MaxAsync(s => s.UniqueStudentAttendanceNumber) + 1;
+                            var maxAdmission = await _context.dbsStudent.MaxAsync(s => s.AdmissionNo);
+                            nextAdmissionNo = (maxAdmission ?? 999) + 1;
+                            var maxEnrollment = await _context.dbsStudent.MaxAsync(s => s.EnrollmentNo);
+                            nextEnrollmentNo = (maxEnrollment ?? 1999) + 1;
+                        }
+
+                        student.UniqueStudentAttendanceNumber = nextAttendanceNumber;
+                        student.AdmissionNo ??= nextAdmissionNo;
+                        student.EnrollmentNo ??= nextEnrollmentNo;
+
+                        var incomingStudentFees = student.StudentFees?.ToList() ?? new List<StudentFee>();
+                        student.StudentFees = null;
+
+                        _context.dbsStudent.Add(student);
+                        await _context.SaveChangesAsync();
+
+                        // Fees
+                        if (incomingStudentFees.Any())
+                        {
+                            foreach (var fee in incomingStudentFees)
+                            {
+                                fee.StudentId = student.StudentId;
+                                fee.StudentFeeId = 0;
+                                _context.StudentFees.Add(fee);
+                            }
+                            await _context.SaveChangesAsync();
+                        }
+
+                        // Users
+                        if (!string.IsNullOrEmpty(student.StudentEmail))
+                        {
+                            var studentUserResult = await CreateUserIfNotExist(student.StudentEmail, student.StudentName, "Student", student.StudentPassword);
+                            if (studentUserResult.Succeeded)
+                            {
+                                student.UserId = studentUserResult.User?.Id;
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(student.ParentEmail))
+                        {
+                            var parent = await _context.Parents.FirstOrDefaultAsync(p => p.Email == student.ParentEmail);
+                            if (parent == null)
+                            {
+                                parent = new Parent
+                                {
+                                    ParentName = student.FatherName ?? student.MotherName ?? "Parent of " + student.StudentName,
+                                    Email = student.ParentEmail,
+                                    Phone = student.FatherContactNumber ?? student.MotherContactNumber,
+                                    CampusId = student.CampusId
+                                };
+                                _context.Parents.Add(parent);
+                                await _context.SaveChangesAsync();
+                            }
+                            student.ParentId = parent.ParentId;
+
+                            var parentUserResult = await CreateUserIfNotExist(student.ParentEmail, parent.ParentName, "Parent", student.ParentPassword);
+                            if (parentUserResult.Succeeded && string.IsNullOrEmpty(parent.UserId))
+                            {
+                                parent.UserId = parentUserResult.User?.Id;
+                                _context.Entry(parent).State = EntityState.Modified;
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+
+                        _context.Entry(student).State = EntityState.Modified;
+                        await _context.SaveChangesAsync();
+                        results.Add(new { student.StudentId, student.StudentName, student.EnrollmentNo });
+                    }
+
+                    await transaction.CommitAsync();
+                    return Ok(new { Message = $"{students.Count} students imported successfully.", Results = results });
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest($"Bulk Import Failed: {ex.InnerException?.Message ?? ex.Message}");
+                }
+            });
+        }
+
         // POST: api/Students
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
